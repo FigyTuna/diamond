@@ -1,0 +1,140 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Diamond Game</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			background-color: #303030;
+		}
+	</style>
+	<script src="pixi.js"></script>
+</head>
+<body>
+	<script>
+		var stage = new PIXI.Stage(0x505050);
+		var renderer = PIXI.autoDetectRenderer(1000, 600);
+		document.body.appendChild(renderer.view);
+		requestAnimFrame(animate);
+
+		//------------------------------------
+
+		var personTexture = PIXI.Texture.fromImage("guy.png");
+
+		var tileTexture = PIXI.Texture.fromImage("tile.png");
+
+		//--------------------
+
+		var left = false;
+		var up = false;
+		var right = false;
+		var down = false;
+
+		var lr = 0;
+		var ud = 0;
+
+		var speed = 3;
+
+		//-------------------------------------
+
+		var size = 10;//FINAL
+		var start = 100;//Depends on other things. Should be centered.
+
+		for(var i = 0; i < size; i++){
+			for(var j = 0; j < size; j++){
+				var tile = new PIXI.Sprite(tileTexture);
+
+				tile.anchor.x = tile.anchor.y = 0.5;
+
+				tile.position.x = (size - 1 + i - j) * 30 + start;
+				tile.position.y = (i + j) * 20 + start;
+
+				stage.addChild(tile);
+			}
+		}
+
+		//--------------------
+
+		var person = new PIXI.Sprite(personTexture);
+
+
+		person.anchor.x = person.anchor.y = 0.5;
+		person.position.x = 250;
+		person.position.y = 150;
+
+		stage.addChild(person);
+
+		//-------------------
+
+		document.addEventListener('keydown', function(event){
+			var code = event.keyCode;
+
+			if(code == 65){ //A
+				left = true;
+			}
+			if(code == 87){ //W
+				up = true;
+			}
+			if(code == 68){ //D
+				right = true;
+			}
+			if(code == 83){ //S
+				down = true;
+			}
+
+		})
+
+		document.addEventListener('keyup', function(event){
+			var code = event.keyCode;
+
+			if(code == 65){ //A
+				left = false;
+			}
+			if(code == 87){ //W
+				up = false;
+			}
+			if(code == 68){ //D
+				right = false;
+			}
+			if(code == 83){ //S
+				down = false;
+			}
+		})
+
+		//----------
+
+		function animate(){
+			requestAnimFrame(animate);
+
+			movement();
+
+			renderer.render(stage);
+		}
+
+		//-------------
+
+		function movement(){
+			person.position.x += lr;
+			person.position.y += ud;
+
+			if(left){
+				lr = -speed;
+			}
+			if(up){
+				ud = -speed;
+			}
+			if(right){
+				lr = speed;
+			}
+			if(down){
+				ud = speed;
+			}
+
+			lr /= 1.1;
+			ud /= 1.1;
+		}
+
+	</script>
+</body>
