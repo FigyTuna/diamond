@@ -25,7 +25,9 @@
 
 		var tileTexture = PIXI.Texture.fromImage("tile.png");
 
-		//--------------------
+		var underTexture = PIXI.Texture.fromImage("under.png");
+
+		//----------------------------------- MOVEMENT VARIABLES
 
 		var left = false;
 		var up = false;
@@ -37,7 +39,24 @@
 
 		var speed = 3;
 
-		//-------------------------------------
+		//------------------------------------- TEMP VARIABLES
+
+		var map = new Array(10);
+		for(var i = 0; i < map.length; i++){
+			map[i] = new Array(10);
+		}
+		for(var i = 0; i < map.length; i++){
+			for(var j = 0; j < map[0].length; j++){
+				map[i][j] = 0;
+			}
+		}
+		map[3][7] = 1;
+		map[5][6] = 2;
+		map[6][6] = 3;
+		map[5][5] = 6;
+		map[6][5] = 1;
+
+		//------------------------------------- TILES
 
 		var size = 10;//FINAL
 		var start = 100;//Depends on other things. Should be centered.
@@ -49,24 +68,48 @@
 				tile.anchor.x = tile.anchor.y = 0.5;
 
 				tile.position.x = (size - 1 + i - j) * 30 + start;
-				tile.position.y = (i + j) * 20 + start;
+				tile.position.y = (i + j) * 20 + start - (12 * map[i][j]); //-12 under hiehgt.
 
 				stage.addChild(tile);
+
+				for(var k = map[i][j]; k > 0; k--){
+					var under = new PIXI.Sprite(underTexture);
+
+					under.anchor.x = tile.anchor.y = 0.5;
+
+					under.position.x = (size - 1 + i - j) * 30 + start + 15; // +15 offset to right.
+					under.position.y = (i + j) * 20 + start - (12 * k); //-12 to be changed.
+
+					stage.addChild(under);
+
+					var under2 = new PIXI.Sprite(underTexture);
+
+					under2.anchor.x = tile.anchor.y = 0.5;
+
+					under2.scale.x = -1;
+
+					under2.position.x = (size - 1 + i - j) * 30 + start - 15; // -15 offset to left.
+					under2.position.y = (i + j) * 20 + start - (12 * k); //-12 to be changed.
+
+					stage.addChild(under2);
+				}
 			}
 		}
 
-		//--------------------
+		//--------------------------------------- PERSON
 
 		var person = new PIXI.Sprite(personTexture);
 
+		var guyx = 250;
+		var guyy = 150;
 
 		person.anchor.x = person.anchor.y = 0.5;
-		person.position.x = 250;
-		person.position.y = 150;
+		person.position.x = guyx;
+		person.position.y = guyy;
 
 		stage.addChild(person);
 
-		//-------------------
+		//-------------------------------------------- INPUT
 
 		document.addEventListener('keydown', function(event){
 			var code = event.keyCode;
@@ -103,21 +146,27 @@
 			}
 		})
 
-		//----------
+		//--------------------------------------------------------------------- GAME LOOP
 
 		function animate(){
 			requestAnimFrame(animate);
 
 			movement();
+			update();
 
 			renderer.render(stage);
 		}
 
-		//-------------
+		function update(){
+			person.position.x = guyx; //Useless for now.
+			person.position.y = guyy;
+		}
+
+		//----------------------------------------------- MOVEMENT
 
 		function movement(){
-			person.position.x += lr;
-			person.position.y += ud;
+			guyx += lr;
+			guyy += ud;
 
 			if(left){
 				lr = -speed;
@@ -132,9 +181,8 @@
 				ud = speed;
 			}
 
-			lr /= 1.1;
-			ud /= 1.1;
+			lr /= 1.15;
+			ud /= 1.15;
 		}
-
 	</script>
 </body>
