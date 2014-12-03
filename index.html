@@ -19,15 +19,21 @@
 		document.body.appendChild(renderer.view);
 		requestAnimFrame(animate);
 
-		//------------------------------------
+		//------------------------------------ TEXTURES
 
-		var personTexture = PIXI.Texture.fromImage("guy.png");
+		var personTexture = PIXI.Texture.fromImage("images/guy.png");
 
-		var tileTexture = PIXI.Texture.fromImage("tile.png");
+		var tileTexture = PIXI.Texture.fromImage("images/tile.png");
 
-		var underTexture = PIXI.Texture.fromImage("under.png");
+		var underTexture = PIXI.Texture.fromImage("images/under.png");
 
 		//----------------------------------- MOVEMENT VARIABLES
+
+		var area = new PIXI.DisplayObjectContainer();
+		stage.addChild(area);
+
+		var size = 10;//FINAL
+		var start = 100;//Depends on other things. Should be centered. Scrolling landscapes too.
 
 		var left = false;
 		var up = false;
@@ -41,60 +47,32 @@
 
 		//------------------------------------- TEMP VARIABLES
 
-		var map = new Array(10);
+		var map = new Array(size);
 		for(var i = 0; i < map.length; i++){
-			map[i] = new Array(10);
+			map[i] = new Array(size);
 		}
 		for(var i = 0; i < map.length; i++){
 			for(var j = 0; j < map[0].length; j++){
 				map[i][j] = 0;
 			}
 		}
-		map[3][7] = 1;
+		for(var i = map.length; i > 0; i--){
+			map[1][i] = i;
+		}
+		map[9][9] = 3;
 		map[5][6] = 2;
-		map[6][6] = 3;
-		map[5][5] = 6;
-		map[6][5] = 1;
+		map[6][6] = 1;
+		map[5][5] = 3;
+		map[6][5] = 2;
 
 		//------------------------------------- TILES
 
-		var size = 10;//FINAL
-		var start = 100;//Depends on other things. Should be centered.
-
-		for(var i = 0; i < size; i++){
-			for(var j = 0; j < size; j++){
-				var tile = new PIXI.Sprite(tileTexture);
-
-				tile.anchor.x = tile.anchor.y = 0.5;
-
-				tile.position.x = (size - 1 + i - j) * 30 + start;
-				tile.position.y = (i + j) * 20 + start - (12 * map[i][j]); //-12 under hiehgt.
-
-				stage.addChild(tile);
-
-				for(var k = map[i][j]; k > 0; k--){
-					var under = new PIXI.Sprite(underTexture);
-
-					under.anchor.x = tile.anchor.y = 0.5;
-
-					under.position.x = (size - 1 + i - j) * 30 + start + 15; // +15 offset to right.
-					under.position.y = (i + j) * 20 + start - (12 * k); //-12 to be changed.
-
-					stage.addChild(under);
-
-					var under2 = new PIXI.Sprite(underTexture);
-
-					under2.anchor.x = tile.anchor.y = 0.5;
-
-					under2.scale.x = -1;
-
-					under2.position.x = (size - 1 + i - j) * 30 + start - 15; // -15 offset to left.
-					under2.position.y = (i + j) * 20 + start - (12 * k); //-12 to be changed.
-
-					stage.addChild(under2);
-				}
-			}
+		var levels = new Array(50); //Some large number
+		for(var i = 0; i < 50; i++){
+			levels[i] = new PIXI.DisplayObjectContainer();
 		}
+
+		drawMap();
 
 		//--------------------------------------- PERSON
 
@@ -103,11 +81,13 @@
 		var guyx = 250;
 		var guyy = 150;
 
-		person.anchor.x = person.anchor.y = 0.5;
+		person.anchor.x = 0.5;
+		person.anchor.y = 1;
+
 		person.position.x = guyx;
 		person.position.y = guyy;
 
-		stage.addChild(person);
+		area.addChild(person);
 
 		//-------------------------------------------- INPUT
 
@@ -158,8 +138,40 @@
 		}
 
 		function update(){
+
+			//Person
+			var offset = 0;
+			var ci = 0;
+			var cj = 0;
+			var close = 1000;
+			for(var i = 0; i < map.length; i++){
+				for(var j = 0; j < map.length; j++){
+					var distance = Math.abs((map.length - 1 + i - j) * 30 + start - guyx) + (Math.abs((i + j) * 20 + start - guyy) * 1.5);
+					if(distance < close && distance < 60){
+						ci = i;
+						cj = j;
+						close = distance;
+					}
+				}
+			}
+			offset = 12 * map[ci][cj];
+
 			person.position.x = guyx; //Useless for now.
-			person.position.y = guyy;
+			person.position.y = guyy - offset;
+
+			//Map and layers
+			while(area.children.length > 0){
+				area.removeChild(area.getChildAt(0));
+			}
+			for(var i = 0; i < 50; i++){ //<
+				if(i <= ci + cj){
+					area.addChild(levels[i]);
+				}else if(i == ci + cj + 1){
+					area.addChild(person);
+				}else{
+					area.addChild(levels[i - 1]);
+				}
+			}
 		}
 
 		//----------------------------------------------- MOVEMENT
@@ -181,8 +193,52 @@
 				ud = speed;
 			}
 
-			lr /= 1.15;
-			ud /= 1.15;
+			lr /= 1.35;
+			ud /= 1.35;
+		}
+
+		function drawMap(){
+			for(var i = 0; i < map.length; i++){
+				for(var j = 0; j < map.length; j++){
+					var tile = new PIXI.Sprite(tileTexture);
+
+					tile.anchor.x = tile.anchor.y = 0.5;
+
+					tile.position.x = (size - 1 + i - j) * 30 + start;
+					tile.position.y = (i + j) * 20 + start - (12 * map[i][j]); //-12 under height.
+
+					levels[i + j].addChild(tile);
+
+					for(var k = map[i][j]; k > 0; k--){
+						if(i == map.length - 1 || k > map[i+1][j]){
+							var under = new PIXI.Sprite(underTexture);
+
+							under.anchor.x = tile.anchor.y = 0.5;
+
+							under.position.x = (size - 1 + i - j) * 30 + start + 15; // +15 offset to right.
+							under.position.y = (i + j) * 20 + start - (12 * k); //-12 to be changed.
+
+							levels[i + j].addChild(under);
+						}
+
+						if(j == map.length - 1 || k > map[i][j+1]){
+							var under2 = new PIXI.Sprite(underTexture);
+
+							under2.anchor.x = tile.anchor.y = 0.5;
+
+							under2.scale.x = -1;
+
+							under2.position.x = (size - 1 + i - j) * 30 + start - 15; // -15 offset to left.
+							under2.position.y = (i + j) * 20 + start - (12 * k); //-12 to be changed.
+
+							levels[i + j].addChild(under2);
+						}
+					}
+				}
+			}
+			for(var i = 0; i < 50; i++){ //<
+				area.addChild(levels[i]);
+			}
 		}
 	</script>
 </body>
