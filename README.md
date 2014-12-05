@@ -10,6 +10,8 @@ I encourage you to try and understand it or if you're not much of a coder, think
 
 Links to everything:
 
-[FigyTuna.me](figytuna.me)
+[FigyTuna.me](www.figytuna.me)
+
 [Google Groups](https://groups.google.com/forum/#!forum/tech-club-game-team)
+
 [Google Drive](https://drive.google.com/folderview?id=0B_ImRSKlJ1p1TUhVbUwtZ2E0d3M&usp=sharing&usp=sharing&urp=http://figytuna.me/#)

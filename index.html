@@ -21,19 +21,21 @@
 
 		//------------------------------------ TEXTURES
 
-		var personTexture = PIXI.Texture.fromImage("images/guy.png");
+		var personTexture = PIXI.Texture.fromImage("images/character/guy.png");
 
-		var tileTexture = PIXI.Texture.fromImage("images/tile.png");
+		var tileTexture = PIXI.Texture.fromImage("images/tile/grass/top.png");
 
-		var underTexture = PIXI.Texture.fromImage("images/under.png");
+		var underTexture = PIXI.Texture.fromImage("images/tile/grass/side.png");
 
 		//----------------------------------- MOVEMENT VARIABLES
 
 		var area = new PIXI.DisplayObjectContainer();
 		stage.addChild(area);
 
-		var size = 10;//FINAL
+		var size = 14;//FINAL
 		var start = 100;//Depends on other things. Should be centered. Scrolling landscapes too.
+		var tileWidth = 50;
+		var tileHeight = 24;
 
 		var left = false;
 		var up = false;
@@ -43,9 +45,12 @@
 		var lr = 0;
 		var ud = 0;
 
+		var lastZi = 0;
+		var lastZj = 0;
+
 		var speed = 3;
 
-		//------------------------------------- TEMP VARIABLES
+		//------------------------------------- TEMP MAP
 
 		var map = new Array(size);
 		for(var i = 0; i < map.length; i++){
@@ -56,14 +61,22 @@
 				map[i][j] = 0;
 			}
 		}
-		for(var i = map.length; i > 0; i--){
+		for(var i = map.length - 2; i > 0; i--){
 			map[1][i] = i;
+			map[i][1] = i;
 		}
+		map[2][2] = 1;
+
 		map[9][9] = 3;
+
 		map[5][6] = 2;
 		map[6][6] = 1;
 		map[5][5] = 3;
 		map[6][5] = 2;
+
+		map[5][2] = 2;
+		map[6][2] = 2;
+		map[6][3] = 2;
 
 		//------------------------------------- TILES
 
@@ -78,8 +91,8 @@
 
 		var person = new PIXI.Sprite(personTexture);
 
-		var guyx = 250;
-		var guyy = 150;
+		var guyx = start * 3;
+		var guyy = start * 3;
 
 		person.anchor.x = 0.5;
 		person.anchor.y = 1;
@@ -94,16 +107,16 @@
 		document.addEventListener('keydown', function(event){
 			var code = event.keyCode;
 
-			if(code == 65){ //A
+			if(code == 65 || code == 37){ //A
 				left = true;
 			}
-			if(code == 87){ //W
+			if(code == 87 || code == 38){ //W
 				up = true;
 			}
-			if(code == 68){ //D
+			if(code == 68 || code == 39){ //D
 				right = true;
 			}
-			if(code == 83){ //S
+			if(code == 83 || code == 40){ //S
 				down = true;
 			}
 
@@ -112,16 +125,16 @@
 		document.addEventListener('keyup', function(event){
 			var code = event.keyCode;
 
-			if(code == 65){ //A
+			if(code == 65 || code == 37){ //A
 				left = false;
 			}
-			if(code == 87){ //W
+			if(code == 87 || code == 38){ //W
 				up = false;
 			}
-			if(code == 68){ //D
+			if(code == 68 || code == 39){ //D
 				right = false;
 			}
-			if(code == 83){ //S
+			if(code == 83 || code == 40){ //S
 				down = false;
 			}
 		})
@@ -131,7 +144,6 @@
 		function animate(){
 			requestAnimFrame(animate);
 
-			movement();
 			update();
 
 			renderer.render(stage);
@@ -139,24 +151,113 @@
 
 		function update(){
 
-			//Person
-			var offset = 0;
+			//Movement
+
+			if(left){
+				lr = -speed;
+			}
+			if(up){
+				ud = -speed * 0.5;
+			}
+			if(right){
+				lr = speed;
+			}
+			if(down){
+				ud = speed * 0.5;
+			}
+			if(left && right){
+				lr = 0;
+			}
+			if(up && down){
+				ud = 0;
+			}
+
+			guyx += lr;
+			guyy += ud;
+
+			// What tile
 			var ci = 0;
 			var cj = 0;
 			var close = 1000;
 			for(var i = 0; i < map.length; i++){
 				for(var j = 0; j < map.length; j++){
-					var distance = Math.abs((map.length - 1 + i - j) * 30 + start - guyx) + (Math.abs((i + j) * 20 + start - guyy) * 1.5);
-					if(distance < close && distance < 60){
+					var distance = Math.abs((map.length - 1 + i - j) * (tileWidth/2) + start - guyx) + (Math.abs((i + j) * (tileHeight/2) + start - guyy) * 1.5);
+					if(distance < close){
 						ci = i;
 						cj = j;
 						close = distance;
 					}
 				}
 			}
-			offset = 12 * map[ci][cj];
 
-			person.position.x = guyx; //Useless for now.
+			//Collision correction
+			//This part works but poorly.
+
+			if(Math.abs(map[ci][cj] - map[lastZi][lastZj]) > 1 || ci > size || cj > size){
+				guyx -= lr;
+				guyy -= ud;
+				if(!(ci != lastZi && cj != lastZj)){
+					if(ci > lastZi){ // bottom right
+						if(right && !down){
+							guyx += speed;
+							guyy += -speed * 0.55;
+						}else if(down && !right){
+							guyx += -speed;
+							guyy += speed * 0.5;
+						}
+					}
+					if(ci < lastZi){ // top left
+						if(left && !up){
+							guyx += -speed;
+							guyy += speed * 0.55;
+						}else if(up && !left){
+							guyx += speed;
+							guyy += -speed * 0.5;
+						}
+					}
+					if(cj > lastZj){ // bottom left
+						if(left && !down){
+							guyx += -speed;
+							guyy += -speed * 0.55;
+						}else if(down && !left){
+							guyx += speed;
+							guyy += speed * 0.5;
+						}
+					}
+					if(cj < lastZj){ // top right
+						if(right && !up){
+							guyx += speed;
+							guyy += speed * 0.55;
+						}else if(up && !right){
+							guyx += -speed;
+							guyy += -speed * 0.5;
+						}
+					}
+				}
+
+				ci = lastZi;
+				cj = lastZj;
+			}
+
+			//Raising to correct height visually
+
+			var offset = 9 * map[ci][cj];
+
+			//Slow down
+
+			lr /= 1.35;
+			ud /= 1.35;
+
+			if(Math.abs(lr) < 0.001){
+				lr = 0;
+			}
+			if(Math.abs(ud) < 0.001){
+				ud = 0;
+			}
+
+			//Person Placement
+
+			person.position.x = guyx;
 			person.position.y = guyy - offset;
 
 			//Map and layers
@@ -172,30 +273,13 @@
 					area.addChild(levels[i - 1]);
 				}
 			}
+
+			//Last
+			lastZi = ci;
+			lastZj = cj;
 		}
 
-		//----------------------------------------------- MOVEMENT
-
-		function movement(){
-			guyx += lr;
-			guyy += ud;
-
-			if(left){
-				lr = -speed;
-			}
-			if(up){
-				ud = -speed;
-			}
-			if(right){
-				lr = speed;
-			}
-			if(down){
-				ud = speed;
-			}
-
-			lr /= 1.35;
-			ud /= 1.35;
-		}
+		//Drawing
 
 		function drawMap(){
 			for(var i = 0; i < map.length; i++){
@@ -204,8 +288,8 @@
 
 					tile.anchor.x = tile.anchor.y = 0.5;
 
-					tile.position.x = (size - 1 + i - j) * 30 + start;
-					tile.position.y = (i + j) * 20 + start - (12 * map[i][j]); //-12 under height.
+					tile.position.x = (size - 1 + i - j) * (tileWidth/2) + start;
+					tile.position.y = (i + j) * (tileHeight/2) + start - (9 * map[i][j]); //-12 under height.
 
 					levels[i + j].addChild(tile);
 
@@ -215,8 +299,8 @@
 
 							under.anchor.x = tile.anchor.y = 0.5;
 
-							under.position.x = (size - 1 + i - j) * 30 + start + 15; // +15 offset to right.
-							under.position.y = (i + j) * 20 + start - (12 * k); //-12 to be changed.
+							under.position.x = (size - 1 + i - j) * (tileWidth/2) + start + (tileWidth/4);
+							under.position.y = (i + j) * (tileHeight/2) + start - (9 * k); //-12 to be changed.
 
 							levels[i + j].addChild(under);
 						}
@@ -228,8 +312,8 @@
 
 							under2.scale.x = -1;
 
-							under2.position.x = (size - 1 + i - j) * 30 + start - 15; // -15 offset to left.
-							under2.position.y = (i + j) * 20 + start - (12 * k); //-12 to be changed.
+							under2.position.x = (size - 1 + i - j) * (tileWidth/2) + start - (tileWidth/4);
+							under2.position.y = (i + j) * (tileHeight/2) + start - (9 * k); //-12 to be changed.
 
 							levels[i + j].addChild(under2);
 						}
