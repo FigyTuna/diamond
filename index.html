@@ -231,7 +231,7 @@
 			//Collision correction version 2
 			//Still clunky and stick. The code is messy too. But it works even better than it did before.
 
-			if(Math.abs(map[ci][cj] - map[lastZi][lastZj]) > 1){ //Or env is in the way
+			if(map[ci][cj] - map[lastZi][lastZj] > 1 || map[ci][cj] - map[lastZi][lastZj] < -2){ //Or env is in the way
 				guyx -= lr;
 				guyy -= ud;
 				if(!(ci != lastZi && cj != lastZj)){
