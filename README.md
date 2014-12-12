@@ -10,7 +10,7 @@ I encourage you to try and understand it or if you're not much of a coder, think
 
 Links to everything:
 
-[FigyTuna.me](www.figytuna.me)
+[FigyTuna.me](http://www.figytuna.me)
 
 [Google Groups](https://groups.google.com/forum/#!forum/tech-club-game-team)
 

@@ -32,16 +32,19 @@
 
 		var envTexture = PIXI.Texture.fromImage("images/object/tree.png");
 
-		//----------------------------------- MOVEMENT VARIABLES
+		var envTexture2 = PIXI.Texture.fromImage("images/object/fenceL.png");
+
+		//----------------------------------- VARIABLES
+
+		versionNumber = "0.0.1 (Alpha)";
 
 		var area = new PIXI.DisplayObjectContainer(); //Main game container.
 		stage.addChild(area);
 
-		var size = 14; //FINAL VALUES //Temporary variable controlling the map size. Needs to be here for the placement algorythm.
-		var start = 100; //Depends on other things. Should be centered. Scrolling landscapes too.
-		var layers = 50; //Temp variable. Don't know what this will eventually be.
+		var start = 100; //Depends on other things. Should be centered. Scrolling landscapes too. //FINAL
+		var layers = 50; //Temp variable. Don't know what this will eventually be. //FINAL
 
-		var tileWidth = 50; //Size of the tiles
+		var tileWidth = 50; //Size of the tile images in pixels
 		var tileHeight = 24;
 		var sideHeight = 9;
 
@@ -56,58 +59,65 @@
 		var lastZi = 0; //Where the player was last tick.
 		var lastZj = 0;
 
-		var speed = 3; //Speed the player travels.
+		var speed = 3; //Speed the player travels. Maybe this will be altered during game play.
+
+		//------------------------------------- New map
+
+		var sizeX = 14;
+		var sizeY = 14;
+
+		var map = new Array(sizeX);
+		for(var i = 0; i < map.length; i++){
+			map[i] = new Array(sizeY);
+		}
+
+		for(var i = 0; i < sizeX; i++){
+			for(var j = 0; j < sizeY; j++){
+				map[i][j] = {
+					h: 0,
+					top: 0,
+					side: 0,
+					env: 0,
+					cr: false, // lower right (collisions)
+					cl: false, // lower left
+					//NPC and loading zone data goes in here too.
+				}
+			}
+		}
 
 		//------------------------------------- TEMP MAP
 
-		var map = new Array(size);
-		for(var i = 0; i < map.length; i++){
-			map[i] = new Array(size);
+		for(var i = sizeX - 2; i > 0; i--){
+			map[1][i].h = i;
+			map[i][1].h = i;
 		}
-		for(var i = 0; i < map.length; i++){
-			for(var j = 0; j < map[0].length; j++){
-				map[i][j] = 0;
-			}
-		}
-		for(var i = map.length - 2; i > 0; i--){
-			map[1][i] = i;
-			map[i][1] = i;
-		}
-		map[2][2] = 1;
+		map[2][2].h = 1;
 
-		map[9][9] = 3;
+		map[9][9].h = 3;
 
-		map[5][6] = 2;
-		map[6][6] = 1;
-		map[5][5] = 3;
-		map[6][5] = 2;
+		map[5][6].h = 2;
+		map[6][6].h = 1;
+		map[5][5].h = 3;
+		map[6][5].h = 2;
 
-		map[5][2] = 2;
-		map[6][2] = 2;
-		map[6][3] = 2;
+		map[5][2].h = 2;
+		map[6][2].h = 2;
+		map[6][3].h = 2;
 
 		//---- Object map (also temporary)
 
-		var envMap = new Array(map.length);
-		for(var i = 0; i < envMap.length; i++){
-			envMap[i] = new Array(map.length);
-		}
-		for(var i = 0; i < envMap.length; i++){
-			for(var j = 0; j < envMap[0].length; j++){
-				envMap[i][j] = 0; // Should be set to object objects as well as tiles to tile objects
-			}
-		}
-
 		for(var i = 4; i < 7; i++){
 			for(var j = 5; j < 9; j++){
-				envMap[j][i] = 1;
+				map[j][i].env = 1;
 			}
 		}
 
-		envMap[0][0] = 1;
-		envMap[6][9] = 1;
-		envMap[7][9] = 1;
-		envMap[7][10] = 1;
+		map[6][9].env = 2;
+		map[6][9].cl = true;
+		map[7][9].env = 2;
+		map[7][9].cl = true;
+		map[7][10].env = 2;
+		map[7][10].cl = true;
 
 		//---------------------------- Map things
 
@@ -128,8 +138,8 @@
 
 		var person = new PIXI.Sprite(personTexture);
 
-		var guyx = start * 3;
-		var guyy = start * 3;
+		var guyx = (sizeY - 1 + lastZi - lastZj) * (tileWidth/2) + start;
+		var guyy = (lastZi + lastZj) * (tileHeight/2) + start;
 
 		person.anchor.x = 0.5;
 		person.anchor.y = 1;
@@ -138,6 +148,14 @@
 		person.position.y = guyy;
 
 		area.addChild(person);
+
+		//---------------------------------------- Version text
+
+		var version = new PIXI.Text("Version: " + versionNumber, {font: "12px Arial", fill: "white"});
+
+		version.position.x = version.position.y = 10;
+
+		stage.addChild(version);
 
 		//-------------------------------------------- INPUT
 
@@ -217,9 +235,9 @@
 			var ci = 0;
 			var cj = 0;
 			var close = 1000;
-			for(var i = 0; i < map.length; i++){
-				for(var j = 0; j < map[0].length; j++){
-					var distance = Math.abs((map.length - 1 + i - j) * (tileWidth/2) + start - guyx) + (Math.abs((i + j) * (tileHeight/2) + start - guyy) * 1.5); //current
+			for(var i = 0; i < sizeX; i++){
+				for(var j = 0; j < sizeY; j++){
+					var distance = Math.abs((sizeY - 1 + i - j) * (tileWidth/2) + start - guyx) + (Math.abs((i + j) * (tileHeight/2) + start - guyy) * 1.5); //current
 					if(distance < close){
 						ci = i;
 						cj = j;
@@ -228,10 +246,27 @@
 				}
 			}
 
-			//Collision correction version 2
+			//Collision correction
 			//Still clunky and stick. The code is messy too. But it works even better than it did before.
 
-			if(map[ci][cj] - map[lastZi][lastZj] > 1 || map[ci][cj] - map[lastZi][lastZj] < -2){ //Or env is in the way
+			var col = false;
+			if(map[ci][cj].h - map[lastZi][lastZj].h > 1 || map[ci][cj].h - map[lastZi][lastZj].h < -2){
+				col = true;
+			}
+			if(map[lastZi][lastZj].cr && ci > lastZi){
+				col = true;
+			}
+			if(map[lastZi][lastZj].cl && cj > lastZj){
+				col = true;
+			}
+			if(map[ci][cj].cr && ci < lastZi){
+				col = true;
+			}
+			if(map[ci][cj].cl && cj < lastZj){
+				col = true;
+			}
+
+			if(col){
 				guyx -= lr;
 				guyy -= ud;
 				if(!(ci != lastZi && cj != lastZj)){
@@ -241,7 +276,7 @@
 							guyy += -speed * 0.55;
 						}else if(down && !right){
 							guyx += -speed;
-							guyy += speed * 0.5;
+							guyy += speed * 0.4;
 						}
 					}
 					if(ci < lastZi){ // top left
@@ -250,7 +285,7 @@
 							guyy += speed * 0.55;
 						}else if(up && !left){
 							guyx += speed;
-							guyy += -speed * 0.5;
+							guyy += -speed * 0.4;
 						}
 					}
 					if(cj > lastZj){ // bottom left
@@ -259,7 +294,7 @@
 							guyy += -speed * 0.55;
 						}else if(down && !left){
 							guyx += speed;
-							guyy += speed * 0.5;
+							guyy += speed * 0.4;
 						}
 					}
 					if(cj < lastZj){ // top right
@@ -268,30 +303,32 @@
 							guyy += speed * 0.55;
 						}else if(up && !right){
 							guyx += -speed;
-							guyy += -speed * 0.5;
+							guyy += -speed * 0.4;
 						}
 					}
 				}else{
+					//env collision when moving up or down doesn't work because these if else statements don't include support for envs. They don't suppoet them because it'd be tedious and messy to do that.
+					//up works going left and down works going right because those are default directions.
 					if(lastZi - 1 == ci && lastZj - 1 == cj){ //Up
-						if(Math.abs(map[lastZi][lastZj - 1] - map[lastZi][lastZj]) > 1 && !(Math.abs(map[lastZi - 1][lastZj] - map[lastZi][lastZj]) > 1)){
+						if(Math.abs(map[lastZi][lastZj - 1].h - map[lastZi][lastZj].h) > 1 && !(Math.abs(map[lastZi - 1][lastZj].h - map[lastZi][lastZj].h) > 1)){
 							guyx += -speed;
 							guyy += -speed * 0.4;
-						}else if(!(Math.abs(map[lastZi][lastZj - 1] - map[lastZi][lastZj]) > 1) && Math.abs(map[lastZi - 1][lastZj] - map[lastZi][lastZj]) > 1){
+						}else if(!(Math.abs(map[lastZi][lastZj - 1].h - map[lastZi][lastZj].h) > 1) && Math.abs(map[lastZi - 1][lastZj].h - map[lastZi][lastZj].h) > 1){
 							guyx += speed;
 							guyy += -speed * 0.4;
-						}else if(!(Math.abs(map[lastZi][lastZj - 1] - map[lastZi][lastZj]) > 1) && !(Math.abs(map[lastZi - 1][lastZj] - map[lastZi][lastZj]) > 1)){
+						}else if(!(Math.abs(map[lastZi][lastZj - 1].h - map[lastZi][lastZj].h) > 1) && !(Math.abs(map[lastZi - 1][lastZj].h - map[lastZi][lastZj].h) > 1)){
 							guyx += -speed;
 							guyy += -speed * 0.4;
 						}
 					}
 					if(lastZi + 1 == ci && lastZj + 1 == cj){ //Down
-						if(Math.abs(map[lastZi][lastZj + 1] - map[lastZi][lastZj]) > 1 && !(Math.abs(map[lastZi + 1][lastZj] - map[lastZi][lastZj]) > 1)){
+						if(Math.abs(map[lastZi][lastZj + 1].h - map[lastZi][lastZj].h) > 1 && !(Math.abs(map[lastZi + 1][lastZj].h - map[lastZi][lastZj].h) > 1)){
 							guyx += speed;
 							guyy += speed * 0.4;
-						}else if(!(Math.abs(map[lastZi][lastZj + 1] - map[lastZi][lastZj]) > 1) && Math.abs(map[lastZi + 1][lastZj] - map[lastZi][lastZj]) > 1){
+						}else if(!(Math.abs(map[lastZi][lastZj + 1].h - map[lastZi][lastZj].h) > 1) && Math.abs(map[lastZi + 1][lastZj].h - map[lastZi][lastZj].h) > 1){
 							guyx += -speed;
 							guyy += speed * 0.4;
-						}else if(!(Math.abs(map[lastZi][lastZj + 1] - map[lastZi][lastZj]) > 1) && !(Math.abs(map[lastZi + 1][lastZj] - map[lastZi][lastZj]) > 1)){
+						}else if(!(Math.abs(map[lastZi][lastZj + 1].h - map[lastZi][lastZj].h) > 1) && !(Math.abs(map[lastZi + 1][lastZj].h - map[lastZi][lastZj].h) > 1)){
 							guyx += -speed;
 							guyy += speed * 0.4;
 						}
@@ -304,7 +341,7 @@
 
 			//Raising to correct height visually.
 
-			var offset = 9 * map[ci][cj];
+			var offset = 9 * map[ci][cj].h;
 
 			//Slow down
 
@@ -354,37 +391,37 @@
 		//Drawing
 
 		function drawMap(){
-			for(var i = 0; i < map.length; i++){
-				for(var j = 0; j < map.length; j++){
+			for(var i = 0; i < sizeX; i++){
+				for(var j = 0; j < sizeY; j++){
 					var tile = new PIXI.Sprite(tileTexture);
 
 					tile.anchor.x = tile.anchor.y = 0.5;
 
-					tile.position.x = (size - 1 + i - j) * (tileWidth/2) + start;
-					tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j]);
+					tile.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
+					tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h);
 
 					levels[i + j].addChild(tile);
 
-					for(var k = map[i][j]; k > 0; k--){
-						if(i == map.length - 1 || k > map[i+1][j]){
+					for(var k = map[i][j].h; k > 0; k--){
+						if(i == sizeX - 1 || k > map[i+1][j].h){
 							var under = new PIXI.Sprite(underTexture);
 
 							under.anchor.x = tile.anchor.y = 0.5;
 
-							under.position.x = (size - 1 + i - j) * (tileWidth/2) + start + (tileWidth/4);
+							under.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start + (tileWidth/4);
 							under.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * k);
 
 							levels[i + j].addChild(under);
 						}
 
-						if(j == map.length - 1 || k > map[i][j+1]){
+						if(j == sizeY - 1 || k > map[i][j+1].h){
 							var under2 = new PIXI.Sprite(underTexture);
 
 							under2.anchor.x = tile.anchor.y = 0.5;
 
 							under2.scale.x = -1;
 
-							under2.position.x = (size - 1 + i - j) * (tileWidth/2) + start - (tileWidth/4);
+							under2.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start - (tileWidth/4);
 							under2.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * k);
 
 							levels[i + j].addChild(under2);
@@ -392,16 +429,27 @@
 					}
 
 					//Objects
-					if(envMap[i][j] == 1){ //Expand for more objects
+					if(map[i][j].env == 1){ //Expand for more objects
 						var env = new PIXI.Sprite(envTexture);
 
 						env.anchor.x = 0.5
 						env.anchor.y = 1;
 
-						env.position.x = (size - 1 + i - j) * (tileWidth/2) + start;
-						env.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j]);
+						env.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
+						env.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h);
 
 						envLevels[i + j].addChild(env);
+					}
+					if(map[i][j].env == 2){
+						var env = new PIXI.Sprite(envTexture2);
+
+						env.anchor.x = 0.5
+						env.anchor.y = 1;
+
+						env.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
+						env.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2);
+
+						levels[i + j + 1].addChild(env);
 					}
 				}
 			}
