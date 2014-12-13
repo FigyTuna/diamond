@@ -1,0 +1,114 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Map Maker for Diamond Game</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			background-color: #303030;
+		}
+	</style>
+	<script src="pixi.js"></script>
+</head>
+<body>
+	<form onsubmit="go('outputText'); return false;">
+	  <input type="text" name="out" id="outputText" value=""></input>
+		<input type="submit" name="submit" value="Output">
+	</form>
+	<input type="file" name="file" id="file">
+	<script>
+
+		//PIXI Stuff
+
+		var stage = new PIXI.Stage(0x505050);
+		var renderer = PIXI.autoDetectRenderer(1000, 600); //Should make the size the size of the window eventually.
+		document.body.appendChild(renderer.view);
+		requestAnimFrame(animate);
+
+		//----------------------------------- VARIABLES
+
+		versionNumber = "Map Maker 0.0.0 (NOT FUNCTIONAL)";
+
+		var area = new PIXI.DisplayObjectContainer(); //Main game container.
+		stage.addChild(area);
+
+		var start = 100; //Depends on other things. Should be centered. Scrolling landscapes too. //FINAL
+		var layers = 50; //Temp variable. Don't know what this will eventually be. //FINAL
+
+		var tileWidth = 50; //Size of the tile images in pixels
+		var tileHeight = 24;
+		var sideHeight = 9;
+
+		var left = false; //Keyboard inputs.
+		var up = false;
+		var right = false;
+		var down = false;
+
+		//---------------------------------------- Version text
+
+		var version = new PIXI.Text("Version: " + versionNumber, {font: "12px Arial", fill: "white"});
+
+		version.position.x = version.position.y = 10;
+
+		stage.addChild(version);
+
+		//----------------------------------------- Output Things
+
+		var  o = "";
+		for(var i = 0; i < 300; i++){
+			o += "dafijasindsav";
+		}
+		function go(outputText){
+			var field = document.getElementById(outputText);
+			field.value = o;
+		}
+
+
+		//-------------------------------------------- INPUT
+
+		document.addEventListener('keydown', function(event){
+			var code = event.keyCode;
+
+			if(code == 65 || code == 37){ //A
+				left = true;
+			}
+			if(code == 87 || code == 38){ //W
+				up = true;
+			}
+			if(code == 68 || code == 39){ //D
+				right = true;
+			}
+			if(code == 83 || code == 40){ //S
+				down = true;
+			}
+
+		})
+
+		document.addEventListener('keyup', function(event){
+			var code = event.keyCode;
+
+			if(code == 65 || code == 37){ //A
+				left = false;
+			}
+			if(code == 87 || code == 38){ //W
+				up = false;
+			}
+			if(code == 68 || code == 39){ //D
+				right = false;
+			}
+			if(code == 83 || code == 40){ //S
+				down = false;
+			}
+		})
+
+		//--------------------------------------------------------------------- GAME LOOP
+
+		function animate(){
+			requestAnimFrame(animate);
+
+			renderer.render(stage);
+		}
+	</script>
+</body>

@@ -11,6 +11,7 @@
 		}
 	</style>
 	<script src="pixi.js"></script>
+	<script src="mapfile.js"></script>
 </head>
 <body>
 	<script>
@@ -24,19 +25,44 @@
 
 		//------------------------------------ TEXTURES (temporary)
 
+		//Textures need to be improved.
+		//Right now you have to manually imput how many textures there are.
+
 		var personTexture = PIXI.Texture.fromImage("images/character/guy.png");
 
-		var tileTexture = PIXI.Texture.fromImage("images/tile/grass/top.png");
+		var topTexture = new Array(10);//[tile set][image]
+		for(var i = 0; i < topTexture.length; i++){
+			topTexture[i] = new Array(10);
+		}
+		for(var i = 0; i < 1; i++){//Constant: number of tile sets
+			for(var j = 0; j < 5; j++){//Constant: number of textures (on all of these.)
+				topTexture[i][j] = PIXI.Texture.fromImage("images/tile/"+i+"/top"+j+".png");
+			}
+		}
 
-		var underTexture = PIXI.Texture.fromImage("images/tile/grass/side.png");
+		var sideTexture = new Array(10);
+		for(var i = 0; i < sideTexture.length; i++){
+			sideTexture[i] = new Array(10);
+		}
+		for(var i = 0; i < 1; i++){
+			for(var j = 0; j < 3; j++){
+				sideTexture[i][j] = PIXI.Texture.fromImage("images/tile/"+i+"/side"+j+".png");
+			}
+		}
 
-		var envTexture = PIXI.Texture.fromImage("images/object/tree.png");
+		var envTexture = new Array(10);
+		for(var i = 1; i < 2; i++){
+			envTexture[i] = PIXI.Texture.fromImage("images/object/env/"+i+".png");
+		}
 
-		var envTexture2 = PIXI.Texture.fromImage("images/object/fenceL.png");
+		var envcTexture = new Array(10);
+		for(var i = 1; i < 4; i++){
+			envcTexture[i] = PIXI.Texture.fromImage("images/object/envc/"+i+".png");
+		}
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "0.0.2 (Alpha)";
+		versionNumber = "0.0.3 (Alpha)   Description: Testing tile sets and loading map from file.";
 
 		var area = new PIXI.DisplayObjectContainer(); //Main game container.
 		stage.addChild(area);
@@ -63,15 +89,19 @@
 
 		//------------------------------------- New map
 
-		var sizeX = 14;
-		var sizeY = 14;
+		var currentMap = 0;
+
+		var sizeX = getValue(currentMap, 0);
+		var sizeY = getValue(currentMap, 1);
 
 		var outside = {
-			h: 0,
-			top: 0,
-			side: 0,
-			env: 0
+			h: getValue(currentMap, 2),
+			top: getValue(currentMap, 3),
+			side: getValue(currentMap, 4),
+			env: getValue(currentMap, 5)
 		}
+
+		var tileSet = getValue(currentMap, 6);
 
 		var map = new Array(sizeX);
 		for(var i = 0; i < map.length; i++){
@@ -85,6 +115,7 @@
 					top: 0,
 					side: 0,
 					env: 0,
+					envc: 0,
 					cr: false, // lower right (collisions)
 					cl: false, // lower left
 					e: 0
@@ -92,42 +123,21 @@
 			}
 		}
 
-		//------------------------------------- TEMP MAP
-
-		for(var i = sizeX - 2; i > 0; i--){
-			map[1][i].h = i;
-			map[i][1].h = i;
-		}
-		map[2][2].h = 1;
-
-		map[9][9].h = 3;
-
-		map[5][6].h = 2;
-		map[6][6].h = 1;
-		map[5][5].h = 3;
-		map[6][5].h = 2;
-
-		map[5][2].h = 2;
-		map[6][2].h = 2;
-		map[6][3].h = 2;
-
-		//---- Object map (also temporary)
-
-		for(var i = 4; i < 7; i++){
-			for(var j = 5; j < 9; j++){
-				map[j][i].env = 1;
+		for(var i = 0; i < sizeX; i++){
+			for(var j = 0; j < sizeY; j++){
+				map[i][j].h = getMap(currentMap, 0, i, j);
+				map[i][j].top = getMap(currentMap, 1, i, j);
+				map[i][j].side = getMap(currentMap, 2, i, j);
+				map[i][j].env = getMap(currentMap, 3, i, j);
+				map[i][j].envc = getMap(currentMap, 4, i, j);
+				map[i][j].cr = getMap(currentMap, 5, i, j);
+				map[i][j].cl = getMap(currentMap, 6, i, j);
+				map[i][j].e = getMap(currentMap, 7, i, j);
 			}
 		}
 
-		map[5][9].env = 2;
-		map[5][9].cl = true;
-		map[6][9].env = 2;
-		map[6][9].cl = true;
-		map[7][9].env = 2;
-		map[7][9].cl = true;
-		map[7][10].env = 2;
-		map[7][10].cl = true;
-
+		//^^^Map modifyers and anything else I have writen down should go somewhere.
+		//Save data too, as well as the npc and event stuff which hasn't been implemented at all.
 
 		//---------------------------- Map things
 
@@ -332,10 +342,10 @@
 						if(!(Math.abs(map[lastZi][lastZj - 1].h - map[lastZi][lastZj].h) > 1) && !(Math.abs(map[lastZi - 1][lastZj].h - map[lastZi][lastZj].h) > 1) && !(map[lastZi][lastZj - 1].cl) && !(map[lastZi - 1][lastZj].cr)){
 							nFix = true;
 						}
-						if(map[lastZi][lastZj - 1].cl){
+						if(map[lastZi][lastZj - 1].cl && !(map[lastZi - 1][lastZj].cr)){
 							lFix = true;
 						}
-						if(map[lastZi - 1][lastZj].cr){
+						if(map[lastZi - 1][lastZj].cr && !(map[lastZi][lastZj - 1].cl)){
 							rFix = true;
 						}
 						if(nFix){
@@ -359,10 +369,10 @@
 						if(!(Math.abs(map[lastZi][lastZj + 1].h - map[lastZi][lastZj].h) > 1) && !(Math.abs(map[lastZi + 1][lastZj].h - map[lastZi][lastZj].h) > 1) && !(map[lastZi][lastZj].cr) && !(map[lastZi][lastZj].cl)){
 							nFix = true;
 						}
-						if(map[lastZi][lastZj].cr){
+						if(map[lastZi][lastZj].cr && !(map[lastZi][lastZj].cl)){
 							lFix = true;
 						}
-						if(map[lastZi][lastZj].cl){
+						if(map[lastZi][lastZj].cl && !(map[lastZi][lastZj].cr)){
 							rFix = true;
 						}
 						if(nFix){
@@ -436,7 +446,7 @@
 		function drawMap(){
 			for(var i = 0; i < sizeX; i++){
 				for(var j = 0; j < sizeY; j++){
-					var tile = new PIXI.Sprite(tileTexture);
+					var tile = new PIXI.Sprite(topTexture[tileSet][map[i][j].top]);
 
 					tile.anchor.x = tile.anchor.y = 0.5;
 
@@ -447,7 +457,7 @@
 
 					for(var k = map[i][j].h; k > 0; k--){
 						if(i == sizeX - 1 || k > map[i+1][j].h){
-							var under = new PIXI.Sprite(underTexture);
+							var under = new PIXI.Sprite(sideTexture[tileSet][map[i][j].side]);
 
 							under.anchor.x = tile.anchor.y = 0.5;
 
@@ -458,7 +468,7 @@
 						}
 
 						if(j == sizeY - 1 || k > map[i][j+1].h){
-							var under2 = new PIXI.Sprite(underTexture);
+							var under2 = new PIXI.Sprite(sideTexture[tileSet][map[i][j].side]);
 
 							under2.anchor.x = tile.anchor.y = 0.5;
 
@@ -472,8 +482,8 @@
 					}
 
 					//Objects
-					if(map[i][j].env == 1){ //Expand for more objects
-						var env = new PIXI.Sprite(envTexture);
+					if(map[i][j].env != 0){ //Expand for more objects
+						var env = new PIXI.Sprite(envTexture[map[i][j].env]);
 
 						env.anchor.x = 0.5
 						env.anchor.y = 1;
@@ -483,8 +493,8 @@
 
 						envLevels[i + j].addChild(env);
 					}
-					if(map[i][j].env == 2){
-						var env = new PIXI.Sprite(envTexture2);
+					if(map[i][j].envc != 0){
+						var env = new PIXI.Sprite(envcTexture[map[i][j].envc]);
 
 						env.anchor.x = 0.5
 						env.anchor.y = 1;
