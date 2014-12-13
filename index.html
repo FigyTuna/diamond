@@ -36,7 +36,7 @@
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "0.0.1 (Alpha)";
+		versionNumber = "0.0.2 (Alpha)";
 
 		var area = new PIXI.DisplayObjectContainer(); //Main game container.
 		stage.addChild(area);
@@ -56,8 +56,8 @@
 		var lr = 0; //Distance in left, right, up, and down that the player will be in the next tick.
 		var ud = 0;
 
-		var lastZi = 0; //Where the player was last tick.
-		var lastZj = 0;
+		var lastZi = 1; //Where the player was last tick.
+		var lastZj = 1;
 
 		var speed = 3; //Speed the player travels. Maybe this will be altered during game play.
 
@@ -65,6 +65,13 @@
 
 		var sizeX = 14;
 		var sizeY = 14;
+
+		var outside = {
+			h: 0,
+			top: 0,
+			side: 0,
+			env: 0
+		}
 
 		var map = new Array(sizeX);
 		for(var i = 0; i < map.length; i++){
@@ -80,7 +87,7 @@
 					env: 0,
 					cr: false, // lower right (collisions)
 					cl: false, // lower left
-					//NPC and loading zone data goes in here too.
+					e: 0
 				}
 			}
 		}
@@ -112,12 +119,15 @@
 			}
 		}
 
+		map[5][9].env = 2;
+		map[5][9].cl = true;
 		map[6][9].env = 2;
 		map[6][9].cl = true;
 		map[7][9].env = 2;
 		map[7][9].cl = true;
 		map[7][10].env = 2;
 		map[7][10].cl = true;
+
 
 		//---------------------------- Map things
 
@@ -220,6 +230,7 @@
 			if(down){
 				ud = speed * 0.5;
 			}
+
 			if(left && right){
 				lr = 0;
 			}
@@ -250,6 +261,10 @@
 			//Still clunky and stick. The code is messy too. But it works even better than it did before.
 
 			var col = false;
+			var lFix = false;
+			var rFix = false;
+			var nFix = false;
+
 			if(map[ci][cj].h - map[lastZi][lastZj].h > 1 || map[ci][cj].h - map[lastZi][lastZj].h < -2){
 				col = true;
 			}
@@ -307,28 +322,56 @@
 						}
 					}
 				}else{
-					//env collision when moving up or down doesn't work because these if else statements don't include support for envs. They don't suppoet them because it'd be tedious and messy to do that.
-					//up works going left and down works going right because those are default directions.
 					if(lastZi - 1 == ci && lastZj - 1 == cj){ //Up
 						if(Math.abs(map[lastZi][lastZj - 1].h - map[lastZi][lastZj].h) > 1 && !(Math.abs(map[lastZi - 1][lastZj].h - map[lastZi][lastZj].h) > 1)){
+							lFix = true;
+						}
+						if(!(Math.abs(map[lastZi][lastZj - 1].h - map[lastZi][lastZj].h) > 1) && Math.abs(map[lastZi - 1][lastZj].h - map[lastZi][lastZj].h) > 1){
+							rFix = true;
+						}
+						if(!(Math.abs(map[lastZi][lastZj - 1].h - map[lastZi][lastZj].h) > 1) && !(Math.abs(map[lastZi - 1][lastZj].h - map[lastZi][lastZj].h) > 1) && !(map[lastZi][lastZj - 1].cl) && !(map[lastZi - 1][lastZj].cr)){
+							nFix = true;
+						}
+						if(map[lastZi][lastZj - 1].cl){
+							lFix = true;
+						}
+						if(map[lastZi - 1][lastZj].cr){
+							rFix = true;
+						}
+						if(nFix){
 							guyx += -speed;
 							guyy += -speed * 0.4;
-						}else if(!(Math.abs(map[lastZi][lastZj - 1].h - map[lastZi][lastZj].h) > 1) && Math.abs(map[lastZi - 1][lastZj].h - map[lastZi][lastZj].h) > 1){
+						}else if(lFix){
+							guyx += -speed;
+							guyy += -speed * 0.4;
+						}else if(rFix){
 							guyx += speed;
-							guyy += -speed * 0.4;
-						}else if(!(Math.abs(map[lastZi][lastZj - 1].h - map[lastZi][lastZj].h) > 1) && !(Math.abs(map[lastZi - 1][lastZj].h - map[lastZi][lastZj].h) > 1)){
-							guyx += -speed;
 							guyy += -speed * 0.4;
 						}
 					}
 					if(lastZi + 1 == ci && lastZj + 1 == cj){ //Down
+						if(!(Math.abs(map[lastZi][lastZj + 1].h - map[lastZi][lastZj].h) > 1) && Math.abs(map[lastZi + 1][lastZj].h - map[lastZi][lastZj].h) > 1){
+							lFix = true;
+						}
 						if(Math.abs(map[lastZi][lastZj + 1].h - map[lastZi][lastZj].h) > 1 && !(Math.abs(map[lastZi + 1][lastZj].h - map[lastZi][lastZj].h) > 1)){
+							rFix = true;
+						}
+						if(!(Math.abs(map[lastZi][lastZj + 1].h - map[lastZi][lastZj].h) > 1) && !(Math.abs(map[lastZi + 1][lastZj].h - map[lastZi][lastZj].h) > 1) && !(map[lastZi][lastZj].cr) && !(map[lastZi][lastZj].cl)){
+							nFix = true;
+						}
+						if(map[lastZi][lastZj].cr){
+							lFix = true;
+						}
+						if(map[lastZi][lastZj].cl){
+							rFix = true;
+						}
+						if(nFix){
 							guyx += speed;
 							guyy += speed * 0.4;
-						}else if(!(Math.abs(map[lastZi][lastZj + 1].h - map[lastZi][lastZj].h) > 1) && Math.abs(map[lastZi + 1][lastZj].h - map[lastZi][lastZj].h) > 1){
-							guyx += -speed;
+						}else if(rFix){
+							guyx += speed;
 							guyy += speed * 0.4;
-						}else if(!(Math.abs(map[lastZi][lastZj + 1].h - map[lastZi][lastZj].h) > 1) && !(Math.abs(map[lastZi + 1][lastZj].h - map[lastZi][lastZj].h) > 1)){
+						}else if(lFix){
 							guyx += -speed;
 							guyy += speed * 0.4;
 						}
