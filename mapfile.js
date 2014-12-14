@@ -3,13 +3,19 @@ function getValue(m, v){
 	for(var i = 0; i < values.length; i++){
 		values[i] = new Array(10);
 	}
+	for(var i = 0; i < values.length; i++){
+		for(var j = 0; j < values[i].length; j++){
+			values[i][j] = 0;
+		}
+	}
 	values[0][0] = 13;
 	values[0][1] = 15;
-	values[0][2] = 0;
-	values[0][3] = 0;
-	values[0][4] = 0;
+	values[0][2] = 3;
+	values[0][3] = 2;
+	values[0][4] = 2;
 	values[0][5] = 0;
 	values[0][6] = 0;
+	values[0][7] = 0;
 
 	values[1][0] = 2;
 	values[1][1] = 6;
@@ -59,6 +65,7 @@ function getMap(m, t, x, y){
 	values[0][6][8][8] = 1;
 
 	values[1][0][1][1] = 1;
+	values[1][4][1][5] = 3;
 
 	return values[m][t][x][y];
 }
