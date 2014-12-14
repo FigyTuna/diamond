@@ -18,6 +18,7 @@
 		<input type="submit" name="submit" value="Output">
 	</form>
 	<input type="file" name="file" id="file">
+	<output id="list"></output>
 	<script>
 
 		//PIXI Stuff
@@ -27,9 +28,43 @@
 		document.body.appendChild(renderer.view);
 		requestAnimFrame(animate);
 
+		//----------------------------------- Textures
+
+		var personTexture = PIXI.Texture.fromImage("images/character/guy.png");
+
+		var topTexture = new Array(10);//[tile set][image]
+		for(var i = 0; i < topTexture.length; i++){
+			topTexture[i] = new Array(10);
+		}
+		for(var i = 0; i < 1; i++){//Constant: number of tile sets
+			for(var j = 0; j < 5; j++){//Constant: number of textures (on all of these.)
+				topTexture[i][j] = PIXI.Texture.fromImage("images/tile/"+i+"/top"+j+".png");
+			}
+		}
+
+		var sideTexture = new Array(10);
+		for(var i = 0; i < sideTexture.length; i++){
+			sideTexture[i] = new Array(10);
+		}
+		for(var i = 0; i < 1; i++){
+			for(var j = 0; j < 3; j++){
+				sideTexture[i][j] = PIXI.Texture.fromImage("images/tile/"+i+"/side"+j+".png");
+			}
+		}
+
+		var envTexture = new Array(10);
+		for(var i = 1; i < 2; i++){
+			envTexture[i] = PIXI.Texture.fromImage("images/object/env/"+i+".png");
+		}
+
+		var envcTexture = new Array(10);
+		for(var i = 1; i < 4; i++){
+			envcTexture[i] = PIXI.Texture.fromImage("images/object/envc/"+i+".png");
+		}
+
 		//----------------------------------- VARIABLES
 
-		versionNumber = "Map Maker 0.0.0 (NOT FUNCTIONAL)";
+		versionNumber = "Map Maker 0.0.1";
 
 		var area = new PIXI.DisplayObjectContainer(); //Main game container.
 		stage.addChild(area);
@@ -46,6 +81,98 @@
 		var right = false;
 		var down = false;
 
+		var bgSpan = 20;
+
+		//---------------------------------------- Map
+
+		var sizeX = 0;
+		var sizeY = 0;
+
+		var outside = {
+			h: 0,
+			top: 0,
+			side: 0,
+		}
+
+		var tileSet = 0;
+
+		var map = new Array(50);
+		for(var i = 0; i < map.length; i++){
+			map[i] = new Array(50);
+		}
+
+		for(var i = 0; i < 50; i++){
+			for(var j = 0; j < 50; j++){
+				map[i][j] = {
+					h: 0,
+					top: 0,
+					side: 0,
+					env: 0,
+					envc: 0,
+					cr: false, // lower right (collisions)
+					cl: false, // lower left
+					e: 0
+				}
+			}
+		}
+
+		function mapIn(m){
+
+			sizeX = m.substring(0, m.indexOf(" "));
+			m = m.substring(m.indexOf(" ") + 1);
+
+			sizeY = m.substring(0, m.indexOf(" "));
+			m = m.substring(m.indexOf(" ") + 1);
+
+			outside.h = m.substring(0, m.indexOf(" "));
+			m = m.substring(m.indexOf(" ") + 1);
+
+			outside.top = m.substring(0, m.indexOf(" "));
+			m = m.substring(m.indexOf(" ") + 1);
+
+			outside.side = m.substring(0, m.indexOf(" "));
+			m = m.substring(m.indexOf(" ") + 1);
+
+			tileSet = m.substring(0, m.indexOf(" "));
+			m = m.substring(m.indexOf(" ") + 1);
+
+			for(var i = 0; i < sizeX; i++){
+				for(var j = 0; j < sizeY; j++){
+					map[i][j].h = m.substring(0, m.indexOf(" "));
+					m = m.substring(m.indexOf(" ") + 1);
+					map[i][j].top = m.substring(0, m.indexOf(" "));
+					m = m.substring(m.indexOf(" ") + 1);
+					map[i][j].side = m.substring(0, m.indexOf(" "));
+					m = m.substring(m.indexOf(" ") + 1);
+					map[i][j].env = m.substring(0, m.indexOf(" "));
+					m = m.substring(m.indexOf(" ") + 1);
+					map[i][j].envc = m.substring(0, m.indexOf(" "));
+					m = m.substring(m.indexOf(" ") + 1);
+					map[i][j].cr = m.substring(0, m.indexOf(" "));
+					m = m.substring(m.indexOf(" ") + 1);
+					map[i][j].cl = m.substring(0, m.indexOf(" "));
+					m = m.substring(m.indexOf(" ") + 1);
+					map[i][j].e = m.substring(0, m.indexOf(" "));
+					m = m.substring(m.indexOf(" ") + 1);
+				}
+			}
+			drawMap();
+			update();
+		}
+
+		//---------------------------------------- layers
+
+		var levels = new Array(layers);
+		for(var i = 0; i < layers; i++){
+			levels[i] = new PIXI.DisplayObjectContainer();
+		}
+		var envLevels = new Array(layers);
+		for(var i = 0; i < layers; i++){
+			envLevels[i] = new PIXI.DisplayObjectContainer();
+		}
+		var bg1 = new PIXI.DisplayObjectContainer();
+		var bg2 = new PIXI.DisplayObjectContainer();
+
 		//---------------------------------------- Version text
 
 		var version = new PIXI.Text("Version: " + versionNumber, {font: "12px Arial", fill: "white"});
@@ -56,14 +183,43 @@
 
 		//----------------------------------------- Output Things
 
-		var  o = "";
-		for(var i = 0; i < 300; i++){
-			o += "dafijasindsav";
-		}
 		function go(outputText){
 			var field = document.getElementById(outputText);
+			var o = "";
+			o += sizeX + " ";
+			o += sizeY + " ";
+			o += outside.h + " ";
+			o += outside.top + " ";
+			o += outside.side + " ";
+			o += tileSet + " ";
+			for(var i = 0; i < sizeX; i++){
+				for(var j = 0; j < sizeY; j++){
+					o += map[i][j].h + " ";
+					o += map[i][j].top + " ";
+					o += map[i][j].side + " ";
+					o += map[i][j].env + " ";
+					o += map[i][j].envc + " ";
+					o += map[i][j].cr + " ";
+					o += map[i][j].cl + " ";
+					o += map[i][j].e + " ";
+				}
+			}
 			field.value = o;
 		}
+
+		function readSingleFile(evt){
+			var f = evt.target.files[0];
+
+			if(f){
+				var r = new FileReader();
+				r.onload = function(e){
+					var contents = e.target.result;
+					mapIn(contents);
+				}
+				r.readAsText(f);
+			}
+		}
+		document.getElementById('file').addEventListener('change', readSingleFile, false);
 
 
 		//-------------------------------------------- INPUT
@@ -109,6 +265,142 @@
 			requestAnimFrame(animate);
 
 			renderer.render(stage);
+		}
+
+		function update(){
+			while(area.children.length > 0){
+				area.removeChild(area.getChildAt(0));
+			}
+			area.addChild(bg1);
+			for(var i = 0; i < layers; i++){
+					area.addChild(levels[i]);
+					area.addChild(envLevels[i]);
+			}
+			area.addChild(bg2);
+		}
+
+		function drawMap(){
+			for(var i = -bgSpan; i < sizeX + bgSpan; i++){
+				for(var j = -bgSpan; j < sizeY + bgSpan; j++){
+					var bgroud1 = (i < 0 || j < 0);
+					var ground2 = (i >= sizeX || j >= sizeY);
+					if(bgroud1){
+						var tile = new PIXI.Sprite(topTexture[tileSet][outside.top]);
+
+						tile.anchor.x = 0.5;
+						tile.anchor.y = 1;
+
+						tile.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
+						tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * outside.h) + sideHeight + 3;
+
+						bg1.addChild(tile);
+
+						for(var k = outside.h; k > 0; k--){
+							if(j >= 0 && j < sizeY && i == -1){
+								var under = new PIXI.Sprite(sideTexture[tileSet][outside.side]);
+
+								under.anchor.x = 0.5;
+								tile.anchor.y = 1;
+
+								under.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start + (tileWidth/4);
+								under.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * k) - 1;
+
+								bg1.addChild(under);
+							}
+
+							if(i >= 0 && i < sizeX && j == -1){
+								var under2 = new PIXI.Sprite(sideTexture[tileSet][outside.side]);
+
+								under2.anchor.x = 0.5;
+								tile.anchor.y = 1;
+
+								under2.scale.x = -1;
+
+								under2.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start - (tileWidth/4);
+								under2.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * k) - 1;
+
+								bg1.addChild(under2);
+							}
+						}
+
+					}else if(ground2){
+						var tile = new PIXI.Sprite(topTexture[tileSet][outside.top]);
+
+						tile.anchor.x = 0.5;
+						tile.anchor.y = 1;
+
+						tile.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
+						tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * outside.h) + sideHeight + 3;
+
+						bg2.addChild(tile);
+					}
+				}
+			}
+			for(var i = 0; i < sizeX; i++){
+				for(var j = 0; j < sizeY; j++){
+					var tile = new PIXI.Sprite(topTexture[tileSet][map[i][j].top]);
+
+					tile.anchor.x =0.5
+					tile.anchor.y = 1;
+
+					tile.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
+					tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + sideHeight + 3;
+
+					levels[i + j].addChild(tile);
+
+					for(var k = map[i][j].h; k > 0; k--){
+						if(i == sizeX - 1 || k > map[i+1][j].h){
+							var under = new PIXI.Sprite(sideTexture[tileSet][map[i][j].side]);
+
+							under.anchor.x = 0.5;
+							tile.anchor.y = 1;
+
+							under.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start + (tileWidth/4);
+							under.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * k) - 1;
+
+							levels[i + j].addChild(under);
+						}
+
+						if(j == sizeY - 1 || k > map[i][j+1].h){
+							var under2 = new PIXI.Sprite(sideTexture[tileSet][map[i][j].side]);
+
+							under2.anchor.x = 0.5;
+							tile.anchor.y = 1;
+
+							under2.scale.x = -1;
+
+							under2.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start - (tileWidth/4);
+							under2.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * k) - 1;
+
+							levels[i + j].addChild(under2);
+						}
+					}
+
+					//Objects
+					if(map[i][j].env != 0){
+						var env = new PIXI.Sprite(envTexture[map[i][j].env]);
+
+						env.anchor.x = 0.5
+						env.anchor.y = 1;
+
+						env.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
+						env.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h);
+
+						envLevels[i + j].addChild(env);
+					}
+					if(map[i][j].envc != 0){
+						var env = new PIXI.Sprite(envcTexture[map[i][j].envc]);
+
+						env.anchor.x = 0.5
+						env.anchor.y = 1;
+
+						env.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
+						env.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2);
+
+						levels[i + j + 1].addChild(env);
+					}
+				}
+			}
 		}
 	</script>
 </body>
