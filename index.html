@@ -231,24 +231,17 @@
 
 			//Movement
 
-			if(left){
+			if(left && !right){
 				lr = -speed;
 			}
-			if(up){
+			if(up && !down){
 				ud = -speed * 0.5;
 			}
-			if(right){
+			if(right && !left){
 				lr = speed;
 			}
-			if(down){
+			if(down && !up){
 				ud = speed * 0.5;
-			}
-
-			if(left && right){
-				lr = 0;
-			}
-			if(up && down){
-				ud = 0;
 			}
 
 			guyx += lr;
@@ -261,7 +254,7 @@
 			var close = 1000;
 			for(var i = 0 - 1; i < sizeX + 1; i++){
 				for(var j = 0 - 1; j < sizeY + 1; j++){
-					var distance = Math.abs((sizeY - 1 + i - j) * (tileWidth/2) + start - guyx) + (Math.abs((i + j) * (tileHeight/2) + start - guyy) * 1.5); //current
+					var distance = Math.abs((sizeY - 1 + i - j) * (tileWidth/2) + start - guyx) + (Math.abs((i + j) * (tileHeight/2) + start - guyy) * 1.5);
 					if(distance < close){
 						ci = i;
 						cj = j;

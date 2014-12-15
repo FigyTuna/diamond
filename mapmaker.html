@@ -64,10 +64,7 @@
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "Map Maker 0.0.1";
-
-		var area = new PIXI.DisplayObjectContainer(); //Main game container.
-		stage.addChild(area);
+		versionNumber = "Map Maker 0.2";
 
 		var start = 100; //Depends on other things. Should be centered. Scrolling landscapes too. //FINAL
 		var layers = 50; //Temp variable. Don't know what this will eventually be. //FINAL
@@ -80,8 +77,48 @@
 		var up = false;
 		var right = false;
 		var down = false;
+		var space = false;
+		var shift = false;
 
-		var bgSpan = 20;
+		var cameraX = 0;
+		var cameraY = 0;
+
+		var speed = 4; // Unlike in the normal game, speed is the camera scrolling speed.
+
+		var mouseMode = 0;
+
+		var bgSpan = 10;
+
+		//---------------------------------------- layers
+
+		var area = new PIXI.DisplayObjectContainer(); //Main game container.
+		stage.addChild(area);
+
+		var levels = new Array(layers);
+		for(var i = 0; i < layers; i++){
+			levels[i] = new PIXI.DisplayObjectContainer();
+		}
+		var envLevels = new Array(layers);
+		for(var i = 0; i < layers; i++){
+			envLevels[i] = new PIXI.DisplayObjectContainer();
+		}
+		var bg1 = new PIXI.DisplayObjectContainer();
+		var bg2 = new PIXI.DisplayObjectContainer();
+
+		area.addChild(bg1);
+		for(var i = 0; i < layers; i++){
+				area.addChild(levels[i]);
+				area.addChild(envLevels[i]);
+		}
+		area.addChild(bg2);
+
+		//---------------------------------------- Version text
+
+		var version = new PIXI.Text("Version: " + versionNumber, {font: "12px Arial", fill: "white"});
+
+		version.position.x = version.position.y = 10;
+
+		stage.addChild(version);
 
 		//---------------------------------------- Map
 
@@ -118,68 +155,47 @@
 
 		function mapIn(m){
 
-			sizeX = m.substring(0, m.indexOf(" "));
+			sizeX = parseInt(m.substring(0, m.indexOf(" ")));
 			m = m.substring(m.indexOf(" ") + 1);
 
-			sizeY = m.substring(0, m.indexOf(" "));
+			sizeY = parseInt(m.substring(0, m.indexOf(" ")));
 			m = m.substring(m.indexOf(" ") + 1);
 
-			outside.h = m.substring(0, m.indexOf(" "));
+			outside.h = parseInt(m.substring(0, m.indexOf(" ")));
 			m = m.substring(m.indexOf(" ") + 1);
 
-			outside.top = m.substring(0, m.indexOf(" "));
+			outside.top = parseInt(m.substring(0, m.indexOf(" ")));
 			m = m.substring(m.indexOf(" ") + 1);
 
-			outside.side = m.substring(0, m.indexOf(" "));
+			outside.side = parseInt(m.substring(0, m.indexOf(" ")));
 			m = m.substring(m.indexOf(" ") + 1);
 
-			tileSet = m.substring(0, m.indexOf(" "));
+			tileSet = parseInt(m.substring(0, m.indexOf(" ")));
 			m = m.substring(m.indexOf(" ") + 1);
 
 			for(var i = 0; i < sizeX; i++){
 				for(var j = 0; j < sizeY; j++){
-					map[i][j].h = m.substring(0, m.indexOf(" "));
+					map[i][j].h = parseInt(m.substring(0, m.indexOf(" ")));
 					m = m.substring(m.indexOf(" ") + 1);
-					map[i][j].top = m.substring(0, m.indexOf(" "));
+					map[i][j].top = parseInt(m.substring(0, m.indexOf(" ")));
 					m = m.substring(m.indexOf(" ") + 1);
-					map[i][j].side = m.substring(0, m.indexOf(" "));
+					map[i][j].side = parseInt(m.substring(0, m.indexOf(" ")));
 					m = m.substring(m.indexOf(" ") + 1);
-					map[i][j].env = m.substring(0, m.indexOf(" "));
+					map[i][j].env = parseInt(m.substring(0, m.indexOf(" ")));
 					m = m.substring(m.indexOf(" ") + 1);
-					map[i][j].envc = m.substring(0, m.indexOf(" "));
+					map[i][j].envc = parseInt(m.substring(0, m.indexOf(" ")));
 					m = m.substring(m.indexOf(" ") + 1);
-					map[i][j].cr = m.substring(0, m.indexOf(" "));
+					map[i][j].cr = parseInt(m.substring(0, m.indexOf(" ")));
 					m = m.substring(m.indexOf(" ") + 1);
-					map[i][j].cl = m.substring(0, m.indexOf(" "));
+					map[i][j].cl = parseInt(m.substring(0, m.indexOf(" ")));
 					m = m.substring(m.indexOf(" ") + 1);
-					map[i][j].e = m.substring(0, m.indexOf(" "));
+					map[i][j].e = parseInt(m.substring(0, m.indexOf(" ")));
 					m = m.substring(m.indexOf(" ") + 1);
 				}
 			}
+			reload();
 			drawMap();
-			update();
 		}
-
-		//---------------------------------------- layers
-
-		var levels = new Array(layers);
-		for(var i = 0; i < layers; i++){
-			levels[i] = new PIXI.DisplayObjectContainer();
-		}
-		var envLevels = new Array(layers);
-		for(var i = 0; i < layers; i++){
-			envLevels[i] = new PIXI.DisplayObjectContainer();
-		}
-		var bg1 = new PIXI.DisplayObjectContainer();
-		var bg2 = new PIXI.DisplayObjectContainer();
-
-		//---------------------------------------- Version text
-
-		var version = new PIXI.Text("Version: " + versionNumber, {font: "12px Arial", fill: "white"});
-
-		version.position.x = version.position.y = 10;
-
-		stage.addChild(version);
 
 		//----------------------------------------- Output Things
 
@@ -239,8 +255,13 @@
 			if(code == 83 || code == 40){ //S
 				down = true;
 			}
-
-		})
+			if(code == 32){ //Space
+				space = true;
+			}
+			if(code == 16){ //Shift
+				shift = true;
+			}
+		});
 
 		document.addEventListener('keyup', function(event){
 			var code = event.keyCode;
@@ -257,31 +278,68 @@
 			if(code == 83 || code == 40){ //S
 				down = false;
 			}
-		})
+			if(code == 32){ //Space
+				space = false;
+			}
+			if(code == 16){ //Shift
+				shift = false;
+			}
+		});
 
 		//--------------------------------------------------------------------- GAME LOOP
 
 		function animate(){
 			requestAnimFrame(animate);
 
+			update();
+
 			renderer.render(stage);
 		}
 
 		function update(){
-			while(area.children.length > 0){
-				area.removeChild(area.getChildAt(0));
+			var speedAfter = speed; // Camera speed up. This feels like messy code but whatever.
+			if(shift){
+				speedAfter += 4;
 			}
-			area.addChild(bg1);
-			for(var i = 0; i < layers; i++){
-					area.addChild(levels[i]);
-					area.addChild(envLevels[i]);
+			if(left && !right){
+				cameraX -= speedAfter;
 			}
-			area.addChild(bg2);
+			if(up && !down){
+				cameraY -= speedAfter;
+			}
+			if(right && !left){
+				cameraX += speedAfter;
+			}
+			if(down && !up){
+				cameraY += speedAfter;
+			}
+
+			area.position.x = -cameraX;
+			area.position.y = -cameraY;
+		}
+
+		function reload(){
+			while(bg1.children.length > 0){
+				bg1.removeChild(bg1.getChildAt(0));
+			}
+			for(var i = 0; i < levels.length; i++){
+				while(levels[i].children.length > 0){
+					levels[i].removeChild(levels[i].getChildAt(0));
+				}
+			}
+			for(var i = 0; i < levels.length; i++){
+				while(envLevels[i].children.length > 0){
+					envLevels[i].removeChild(envLevels[i].getChildAt(0));
+				}
+			}
+			while(bg2.children.length > 0){
+				bg2.removeChild(bg2.getChildAt(0));
+			}
 		}
 
 		function drawMap(){
-			for(var i = -bgSpan; i < sizeX + bgSpan; i++){
-				for(var j = -bgSpan; j < sizeY + bgSpan; j++){
+			for(var i = -bgSpan; i < bgSpan + sizeX; i++){
+				for(var j = -bgSpan; j < bgSpan + sizeY; j++){
 					var bgroud1 = (i < 0 || j < 0);
 					var ground2 = (i >= sizeX || j >= sizeY);
 					if(bgroud1){
@@ -291,7 +349,7 @@
 						tile.anchor.y = 1;
 
 						tile.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
-						tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * outside.h) + sideHeight + 3;
+						tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * outside.h) + (tileHeight/2);
 
 						bg1.addChild(tile);
 
@@ -330,7 +388,7 @@
 						tile.anchor.y = 1;
 
 						tile.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
-						tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * outside.h) + sideHeight + 3;
+						tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * outside.h) + (tileHeight/2);
 
 						bg2.addChild(tile);
 					}
@@ -344,7 +402,37 @@
 					tile.anchor.y = 1;
 
 					tile.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
-					tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + sideHeight + 3;
+					tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2);
+
+					tile.hitArea = new PIXI.Polygon(new PIXI.Point(0, 0), new PIXI.Point(-tileWidth/2, -tileHeight/2), new PIXI.Point(0, -tileHeight), new PIXI.Point(tileWidth/2, -tileHeight/2));
+
+					tile.interactive = true;
+
+					tile.mousedown = function(data){
+						if(mouseMode == 0){ // Height edit
+							var newHeight = prompt("Enter new height."); // Move this to and input element in HTML part
+							if(newHeight >= 0){
+								var ci = 0;
+								var cj = 0;
+								var close = 1000;
+								for(var i = 0; i < sizeX; i++){
+									for(var j = 0; j < sizeY; j++){
+										var distance = Math.abs((sizeY - 1 + i - j) * (tileWidth/2) + start - this.position.x) + (Math.abs((i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2) - this.position.y) * 1.5);
+										if(distance < close){
+											ci = i;
+											cj = j;
+											close = distance;
+										}
+									}
+								}
+								console.log(this.position.x + " " + this.position.y);
+								console.log(distance);
+								map[ci][cj].h = newHeight;
+								reload();
+								drawMap();
+							}
+						}
+					}
 
 					levels[i + j].addChild(tile);
 
