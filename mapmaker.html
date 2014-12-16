@@ -13,12 +13,25 @@
 	<script src="pixi.js"></script>
 </head>
 <body>
+  <form onsubmit="newMap('mx', 'my', 'ts'); return false;">
+    <input type="text" name="mx" id="mx" value="Size (X)"></input>
+    <input type="text" name="my" id="my" value="Size (Y)"></input>
+    <input type="text" name="ts" id="ts" value="Tile Set"></input>
+    <input type="submit" name="submit" value="New">
+  </form>
 	<form onsubmit="go('outputText'); return false;">
 	  <input type="text" name="out" id="outputText" value=""></input>
-		<input type="submit" name="submit" value="Output">
+		<input type="submit" name="submit" value="Save">
+    <input type="file" name="file" id="file">
 	</form>
-	<input type="file" name="file" id="file">
-	<output id="list"></output>
+  <form onsubmit="heightM('h'); return false;">
+    <input type="text" name="h" id="h" value="New Height"></input>
+    <input type="submit" name="submit" value="Height">
+  </form>
+  <form onsubmit="eventM('e'); return false;">
+    <input type="text" name="e" id="e" value="New Event"></input>
+    <input type="submit" name="submit" value="Event">
+  </form>
 	<script>
 
 		//PIXI Stuff
@@ -32,9 +45,9 @@
 
 		var personTexture = PIXI.Texture.fromImage("images/character/guy.png");
 
-		var topTexture = new Array(10);//[tile set][image]
+		var topTexture = new Array(1);//[tile set][image]
 		for(var i = 0; i < topTexture.length; i++){
-			topTexture[i] = new Array(10);
+			topTexture[i] = new Array(5);
 		}
 		for(var i = 0; i < 1; i++){//Constant: number of tile sets
 			for(var j = 0; j < 5; j++){//Constant: number of textures (on all of these.)
@@ -42,9 +55,9 @@
 			}
 		}
 
-		var sideTexture = new Array(10);
+		var sideTexture = new Array(1);
 		for(var i = 0; i < sideTexture.length; i++){
-			sideTexture[i] = new Array(10);
+			sideTexture[i] = new Array(3);
 		}
 		for(var i = 0; i < 1; i++){
 			for(var j = 0; j < 3; j++){
@@ -52,19 +65,29 @@
 			}
 		}
 
-		var envTexture = new Array(10);
+		var envTexture = new Array(2);
+    envTexture[0] = PIXI.Texture.fromImage("images/mapmaker/clearEnv.png");
 		for(var i = 1; i < 2; i++){
 			envTexture[i] = PIXI.Texture.fromImage("images/object/env/"+i+".png");
 		}
 
-		var envcTexture = new Array(10);
+		var envcTexture = new Array(2);
+    envcTexture[0] = PIXI.Texture.fromImage("images/mapmaker/clearEnv.png");
 		for(var i = 1; i < 4; i++){
 			envcTexture[i] = PIXI.Texture.fromImage("images/object/envc/"+i+".png");
 		}
 
+    var topHudTexture = new PIXI.Texture.fromImage("images/mapmaker/top.png");
+    var sideHudTexture = new PIXI.Texture.fromImage("images/mapmaker/side.png");
+    var collHudTexture = new PIXI.Texture.fromImage("images/mapmaker/coll.png");
+    var envHudTexture = new PIXI.Texture.fromImage("images/mapmaker/env.png");
+    var envcHudTexture = new PIXI.Texture.fromImage("images/mapmaker/envc.png");
+
+    var collTexture = new PIXI.Texture.fromImage("images/mapmaker/collSide.png");
+
 		//----------------------------------- VARIABLES
 
-		versionNumber = "Map Maker 0.2";
+		versionNumber = "Map Maker 1.0";
 
 		var start = 100; //Depends on other things. Should be centered. Scrolling landscapes too. //FINAL
 		var layers = 50; //Temp variable. Don't know what this will eventually be. //FINAL
@@ -85,9 +108,10 @@
 
 		var speed = 4; // Unlike in the normal game, speed is the camera scrolling speed.
 
-		var mouseMode = 0;
+    var bgSpan = 10;
 
-		var bgSpan = 10;
+		var mouseMode = 0;
+    var toolValue = 0;
 
 		//---------------------------------------- layers
 
@@ -120,38 +144,224 @@
 
 		stage.addChild(version);
 
-		//---------------------------------------- Map
+    //---------------------------------------- Map
 
-		var sizeX = 0;
-		var sizeY = 0;
+    var sizeX = 0;
+    var sizeY = 0;
 
-		var outside = {
-			h: 0,
-			top: 0,
-			side: 0,
-		}
+    var outside = {
+      h: 0,
+      top: 2,
+      side: 0,
+    }
 
-		var tileSet = 0;
+    var tileSet = 0;
 
-		var map = new Array(50);
-		for(var i = 0; i < map.length; i++){
-			map[i] = new Array(50);
-		}
+    var map = new Array(50);
+    for(var i = 0; i < map.length; i++){
+      map[i] = new Array(50);
+    }
 
-		for(var i = 0; i < 50; i++){
-			for(var j = 0; j < 50; j++){
-				map[i][j] = {
-					h: 0,
-					top: 0,
-					side: 0,
-					env: 0,
-					envc: 0,
-					cr: false, // lower right (collisions)
-					cl: false, // lower left
-					e: 0
-				}
-			}
-		}
+    for(var i = 0; i < 50; i++){
+      for(var j = 0; j < 50; j++){
+        map[i][j] = {
+          h: 0,
+          top: 0,
+          side: 0,
+          env: 0,
+          envc: 0,
+          cr: false, // lower right (collisions)
+          cl: false, // lower left
+          e: 0
+        }
+      }
+    }
+
+    //--------------------------------------- HUD
+
+    var extra = new PIXI.DisplayObjectContainer();
+    function clearExtra(){
+      while(extra.children.length > 0){
+        extra.removeChild(extra.getChildAt(0));
+      }
+    }
+
+    var hudPosX = 20;
+    var hudPosY = 30;
+    var hudButtonHeight = 40;
+
+    var topButton = new PIXI.Sprite(topHudTexture);
+    topButton.position.x = hudPosX;
+    topButton.position.y = hudPosY + (hudButtonHeight * 0);
+    topButton.interactive = true;
+    topButton.mousedown = function(data){
+      clearExtra();
+      if(mouseMode != 1){
+        toolValue = 0;
+      }else{
+        toolValue++;
+        if(toolValue >= topTexture[tileSet].length){
+          toolValue = 0;
+        }
+      }
+      var sel = new PIXI.Sprite(topTexture[tileSet][toolValue]);
+      sel.position.x = this.position.x;
+      sel.position.y = this.position.y;
+      extra.addChild(sel);
+      mouseMode = 1;
+      reload();
+      drawMap();
+    }
+    stage.addChild(topButton);
+
+    var sideButton = new PIXI.Sprite(sideHudTexture);
+    sideButton.position.x = hudPosX;
+    sideButton.position.y = hudPosY + (hudButtonHeight * 1);
+    sideButton.interactive = true;
+    sideButton.mousedown = function(data){
+      clearExtra();
+      if(mouseMode != 2){
+        toolValue = 0;
+      }else{
+        toolValue++;
+        if(toolValue >= sideTexture[tileSet].length){
+          toolValue = 0;
+        }
+      }
+      var sel = new PIXI.Sprite(sideTexture[tileSet][toolValue]);
+      sel.position.x = this.position.x;
+      sel.position.y = this.position.y;
+      extra.addChild(sel);
+      mouseMode = 2;
+      reload();
+      drawMap();
+    }
+    stage.addChild(sideButton);
+
+    var collButton = new PIXI.Sprite(collHudTexture);
+    collButton.position.x = hudPosX;
+    collButton.position.y = hudPosY + (hudButtonHeight * 2);
+    collButton.interactive = true;
+    collButton.mousedown = function(data){
+      clearExtra();
+      mouseMode = 3;
+      reload();
+      drawMap();
+    }
+    stage.addChild(collButton);
+
+    var envButton = new PIXI.Sprite(envHudTexture);
+    envButton.position.x = hudPosX;
+    envButton.position.y = hudPosY + (hudButtonHeight * 3);
+    envButton.interactive = true;
+    envButton.mousedown = function(data){
+      clearExtra();
+      if(mouseMode != 4){
+        toolValue = 0;
+      }else{
+        toolValue++;
+        if(toolValue >= envTexture.length){
+          toolValue = 0;
+        }
+      }
+      var sel = new PIXI.Sprite(envTexture[toolValue]);
+      sel.position.x = this.position.x;
+      sel.position.y = this.position.y;
+      extra.addChild(sel);
+      mouseMode = 4;
+      reload();
+      drawMap();
+    }
+    stage.addChild(envButton);
+
+    var envcButton = new PIXI.Sprite(envcHudTexture);
+    envcButton.position.x = hudPosX;
+    envcButton.position.y = hudPosY + (hudButtonHeight * 4);
+    envcButton.interactive = true;
+    envcButton.mousedown = function(data){
+      clearExtra();
+      if(mouseMode != 5){
+        toolValue = 0;
+      }else{
+        toolValue++;
+        if(toolValue >= envcTexture.length){
+          toolValue = 0;
+        }
+      }
+      var sel = new PIXI.Sprite(envcTexture[toolValue]);
+      sel.position.x = this.position.x;
+      sel.position.y = this.position.y;
+      extra.addChild(sel);
+      mouseMode = 5;
+      reload();
+      drawMap();
+    }
+    stage.addChild(envcButton);
+
+    stage.addChild(extra);
+
+    function heightM(h){
+      var f = document.getElementById(h);
+      toolValue = f.value;
+      f.value = "";
+      clearExtra();
+      mouseMode = 0;
+      reload();
+      drawMap();
+    }
+
+    function eventM(e){
+      alert("This does nothing yet.");
+    }
+
+    //---------------------------------------------------------- New map
+
+    function newMap(mx, my, ts){
+      var f = document.getElementById(mx);
+      sizeX = parseInt(f.value);
+      f.value = "x";
+      var f2 = document.getElementById(my);
+      sizeY = parseInt(f2.value);
+      f2.value = "y";
+      var f3 = document.getElementById(ts);
+      tileSet = parseInt(f3.value);
+      f3.value = "t";
+
+      for(var i = 0; i < sizeX; i++){
+        for(var j = 0; j < sizeY; j++){
+          map[i][j] = {
+            h: 0,
+            top: 0,
+            side: 0,
+            env: 0,
+            envc: 0,
+            cr: false, // lower right (collisions)
+            cl: false, // lower left
+            e: 0
+          }
+        }
+      }
+
+      reload();
+      drawMap();
+    }
+
+    //----------------------------------------------------------- Map input
+
+    function readSingleFile(evt){
+      var f = evt.target.files[0];
+
+      if(f){
+        var r = new FileReader();
+        r.onload = function(e){
+          var contents = e.target.result;
+          mapIn(contents);
+        }
+        r.readAsText(f);
+      }
+    }
+
+    document.getElementById('file').addEventListener('change', readSingleFile, false);
 
 		function mapIn(m){
 
@@ -197,7 +407,7 @@
 			drawMap();
 		}
 
-		//----------------------------------------- Output Things
+		//----------------------------------------- Map output
 
 		function go(outputText){
 			var field = document.getElementById(outputText);
@@ -215,28 +425,13 @@
 					o += map[i][j].side + " ";
 					o += map[i][j].env + " ";
 					o += map[i][j].envc + " ";
-					o += map[i][j].cr + " ";
-					o += map[i][j].cl + " ";
+					o += (0 + map[i][j].cr) + " "; // Not sure if +0 is needed.
+					o += (0 + map[i][j].cl) + " ";
 					o += map[i][j].e + " ";
 				}
 			}
 			field.value = o;
 		}
-
-		function readSingleFile(evt){
-			var f = evt.target.files[0];
-
-			if(f){
-				var r = new FileReader();
-				r.onload = function(e){
-					var contents = e.target.result;
-					mapIn(contents);
-				}
-				r.readAsText(f);
-			}
-		}
-		document.getElementById('file').addEventListener('change', readSingleFile, false);
-
 
 		//-------------------------------------------- INPUT
 
@@ -351,6 +546,41 @@
 						tile.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
 						tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * outside.h) + (tileHeight/2);
 
+            tile.hitArea = new PIXI.Polygon(new PIXI.Point(0, 0), new PIXI.Point(-tileWidth/2, -tileHeight/2), new PIXI.Point(0, -tileHeight), new PIXI.Point(tileWidth/2, -tileHeight/2));
+
+            tile.interactive = true;
+
+            tile.mousedown = function(data){
+              var ci = 0;
+              var cj = 0;
+              var close = 1000;
+              for(var i = 0; i < sizeX; i++){
+                for(var j = 0; j < sizeY; j++){
+                  var distance = Math.abs((sizeY - 1 + i - j) * (tileWidth/2) + start - this.position.x) + (Math.abs((i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2) - this.position.y) * 1.5);
+                  if(distance < close){
+                    ci = i;
+                    cj = j;
+                    close = distance;
+                  }
+                }
+              }
+              if(mouseMode == 0){
+                if(toolValue >= 0){
+                  outside.h = toolValue;
+                  reload();
+                  drawMap();
+                }
+              }else if(mouseMode == 1){
+                outside.top = toolValue;
+                reload();
+                drawMap();
+              }else if(mouseMode == 2){
+                outside.side = toolValue;
+                reload();
+                drawMap();
+              }
+            }
+
 						bg1.addChild(tile);
 
 						for(var k = outside.h; k > 0; k--){
@@ -390,6 +620,41 @@
 						tile.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
 						tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * outside.h) + (tileHeight/2);
 
+            tile.hitArea = new PIXI.Polygon(new PIXI.Point(0, 0), new PIXI.Point(-tileWidth/2, -tileHeight/2), new PIXI.Point(0, -tileHeight), new PIXI.Point(tileWidth/2, -tileHeight/2));
+
+            tile.interactive = true;
+
+            tile.mousedown = function(data){
+              var ci = 0;
+              var cj = 0;
+              var close = 1000;
+              for(var i = 0; i < sizeX; i++){
+                for(var j = 0; j < sizeY; j++){
+                  var distance = Math.abs((sizeY - 1 + i - j) * (tileWidth/2) + start - this.position.x) + (Math.abs((i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2) - this.position.y) * 1.5);
+                  if(distance < close){
+                    ci = i;
+                    cj = j;
+                    close = distance;
+                  }
+                }
+              }
+              if(mouseMode == 0){
+                if(toolValue >= 0){
+                  outside.h = toolValue;
+                  reload();
+                  drawMap();
+                }
+              }else if(mouseMode == 1){
+                outside.top = toolValue;
+                reload();
+                drawMap();
+              }else if(mouseMode == 2){
+                outside.side = toolValue;
+                reload();
+                drawMap();
+              }
+            }
+
 						bg2.addChild(tile);
 					}
 				}
@@ -409,29 +674,56 @@
 					tile.interactive = true;
 
 					tile.mousedown = function(data){
+            var ci = 0;
+            var cj = 0;
+            var close = 1000;
+            for(var i = 0; i < sizeX; i++){
+              for(var j = 0; j < sizeY; j++){
+                var distance = Math.abs((sizeY - 1 + i - j) * (tileWidth/2) + start - this.position.x) + (Math.abs((i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2) - this.position.y) * 1.5);
+                if(distance < close){
+                  ci = i;
+                  cj = j;
+                  close = distance;
+                }
+              }
+            }
 						if(mouseMode == 0){ // Height edit
-							var newHeight = prompt("Enter new height."); // Move this to and input element in HTML part
-							if(newHeight >= 0){
-								var ci = 0;
-								var cj = 0;
-								var close = 1000;
-								for(var i = 0; i < sizeX; i++){
-									for(var j = 0; j < sizeY; j++){
-										var distance = Math.abs((sizeY - 1 + i - j) * (tileWidth/2) + start - this.position.x) + (Math.abs((i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2) - this.position.y) * 1.5);
-										if(distance < close){
-											ci = i;
-											cj = j;
-											close = distance;
-										}
-									}
-								}
-								console.log(this.position.x + " " + this.position.y);
-								console.log(distance);
-								map[ci][cj].h = newHeight;
+							if(toolValue >= 0){// Move to other error handled blahalbjasdohjb
+								map[ci][cj].h = toolValue;
 								reload();
 								drawMap();
 							}
-						}
+						}else if(mouseMode == 1){
+              map[ci][cj].top = toolValue;
+              reload();
+              drawMap();
+            }else if(mouseMode == 2){
+              map[ci][cj].side = toolValue;
+              reload();
+              drawMap();
+            }else if(mouseMode == 3){
+              if(!map[ci][cj].cl && !map[ci][cj].cr){
+                map[ci][cj].cl = 1;
+              }else if(map[ci][cj].cl && !map[ci][cj].cr){
+                map[ci][cj].cl = 0;
+                map[ci][cj].cr = 1;
+              }else if(!map[ci][cj].cl && map[ci][cj].cr){
+                map[ci][cj].cl = 1;
+              }else{
+                map[ci][cj].cl = 0;
+                map[ci][cj].cr = 0;
+              }
+              reload();
+              drawMap();
+            }else if(mouseMode == 4){
+              map[ci][cj].env = toolValue;
+              reload();
+              drawMap();
+            }else if(mouseMode == 5){
+              map[ci][cj].envc = toolValue;
+              reload();
+              drawMap();
+            }
 					}
 
 					levels[i + j].addChild(tile);
@@ -442,6 +734,10 @@
 
 							under.anchor.x = 0.5;
 							tile.anchor.y = 1;
+
+              if(mouseMode == 3){
+                under.alpha = .7;
+              }
 
 							under.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start + (tileWidth/4);
 							under.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * k) - 1;
@@ -455,6 +751,10 @@
 							under2.anchor.x = 0.5;
 							tile.anchor.y = 1;
 
+              if(mouseMode == 3){
+                under2.alpha = .7;
+              }
+
 							under2.scale.x = -1;
 
 							under2.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start - (tileWidth/4);
@@ -463,6 +763,39 @@
 							levels[i + j].addChild(under2);
 						}
 					}
+          //Collision markers
+          if(map[i][j].cr){
+            var cm = new PIXI.Sprite(collTexture);
+
+            cm.anchor.x = 0.5;
+            cm.anchor.y = 1;
+
+            if(mouseMode != 3){
+              cm.alpha = 0;
+            }
+
+            cm.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
+            cm.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2);
+
+            levels[i + j + 1].addChild(cm);
+          }
+          if(map[i][j].cl){
+            var cm = new PIXI.Sprite(collTexture);
+
+            cm.anchor.x = 0.5;
+            cm.anchor.y = 1;
+
+            cm.scale.x = -1;
+
+            if(mouseMode != 3){
+              cm.alpha = 0;
+            }
+
+            cm.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
+            cm.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2);
+
+            levels[i + j + 1].addChild(cm);
+          }
 
 					//Objects
 					if(map[i][j].env != 0){
@@ -470,6 +803,10 @@
 
 						env.anchor.x = 0.5
 						env.anchor.y = 1;
+
+            if(mouseMode == 3){
+              env.alpha = .7;
+            }
 
 						env.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
 						env.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h);
@@ -481,6 +818,10 @@
 
 						env.anchor.x = 0.5
 						env.anchor.y = 1;
+
+            if(mouseMode == 3){
+              env.alpha = .7;
+            }
 
 						env.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
 						env.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2);
