@@ -24,10 +24,6 @@
 		<input type="submit" name="submit" value="Save">
     <input type="file" name="file" id="file">
 	</form>
-  <form onsubmit="heightM('h'); return false;">
-    <input type="text" name="h" id="h" value="New Height"></input>
-    <input type="submit" name="submit" value="Height">
-  </form>
   <form onsubmit="eventM('e'); return false;">
     <input type="text" name="e" id="e" value="New Event"></input>
     <input type="submit" name="submit" value="Event">
@@ -47,47 +43,50 @@
 
 		var topTexture = new Array(1);//[tile set][image]
 		for(var i = 0; i < topTexture.length; i++){
-			topTexture[i] = new Array(5);
+			topTexture[i] = new Array(10);
 		}
 		for(var i = 0; i < 1; i++){//Constant: number of tile sets
-			for(var j = 0; j < 5; j++){//Constant: number of textures (on all of these.)
+			for(var j = 0; j < 10; j++){//Constant: number of textures (on all of these.)
 				topTexture[i][j] = PIXI.Texture.fromImage("images/tile/"+i+"/top"+j+".png");
 			}
 		}
 
 		var sideTexture = new Array(1);
 		for(var i = 0; i < sideTexture.length; i++){
-			sideTexture[i] = new Array(3);
+			sideTexture[i] = new Array(5);
 		}
 		for(var i = 0; i < 1; i++){
-			for(var j = 0; j < 3; j++){
+			for(var j = 0; j < 5; j++){
 				sideTexture[i][j] = PIXI.Texture.fromImage("images/tile/"+i+"/side"+j+".png");
 			}
 		}
 
-		var envTexture = new Array(2);
+		var envTexture = new Array(3);
     envTexture[0] = PIXI.Texture.fromImage("images/mapmaker/clearEnv.png");
-		for(var i = 1; i < 2; i++){
+		for(var i = 1; i < 3; i++){
 			envTexture[i] = PIXI.Texture.fromImage("images/object/env/"+i+".png");
 		}
 
-		var envcTexture = new Array(2);
+		var envcTexture = new Array(4);
     envcTexture[0] = PIXI.Texture.fromImage("images/mapmaker/clearEnv.png");
 		for(var i = 1; i < 4; i++){
 			envcTexture[i] = PIXI.Texture.fromImage("images/object/envc/"+i+".png");
 		}
 
+		var heightHudTexture = new PIXI.Texture.fromImage("images/mapmaker/height.png");
     var topHudTexture = new PIXI.Texture.fromImage("images/mapmaker/top.png");
     var sideHudTexture = new PIXI.Texture.fromImage("images/mapmaker/side.png");
     var collHudTexture = new PIXI.Texture.fromImage("images/mapmaker/coll.png");
     var envHudTexture = new PIXI.Texture.fromImage("images/mapmaker/env.png");
     var envcHudTexture = new PIXI.Texture.fromImage("images/mapmaker/envc.png");
 
+		var windowTexture = new PIXI.Texture.fromImage("images/mapmaker/window.png");
+
     var collTexture = new PIXI.Texture.fromImage("images/mapmaker/collSide.png");
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "Map Maker 1.0";
+		versionNumber = "Map Maker 1.1";
 
 		var start = 100; //Depends on other things. Should be centered. Scrolling landscapes too. //FINAL
 		var layers = 50; //Temp variable. Don't know what this will eventually be. //FINAL
@@ -180,135 +179,120 @@
     //--------------------------------------- HUD
 
     var extra = new PIXI.DisplayObjectContainer();
+		var buttons = new PIXI.DisplayObjectContainer();
     function clearExtra(){
       while(extra.children.length > 0){
         extra.removeChild(extra.getChildAt(0));
       }
+			for(var i = 0; i < buttons.children.length; i++){
+				buttons.getChildAt(i).tint = 0xFFFFFF;
+			}
     }
 
     var hudPosX = 20;
     var hudPosY = 30;
     var hudButtonHeight = 40;
 
+		function buildButton(b, id, t){
+			b.position.x = hudPosX;
+			b.position.y = hudPosY + (hudButtonHeight * id);
+			b.interactive = true;
+			b.mousedown = function(data){
+				clearExtra();
+				b.tint = 0x606060;
+				if(mouseMode != id){
+					toolValue = 0;
+				}else{
+					if(shift){
+						toolValue--;
+						if(toolValue < 0){
+							toolValue = t.length - 1;
+						}
+					}else{
+						toolValue++;
+						if(toolValue >= t.length){
+							toolValue = 0;
+						}
+					}
+				}
+				var w = new PIXI.Sprite(windowTexture);
+				w.position.x = hudPosX + 80;
+				w.position.y = hudPosY + 5;
+				extra.addChild(w);
+				var sel = new PIXI.Sprite(t[toolValue]);
+				sel.position.x = hudPosX + 90;
+				sel.position.y = hudPosY + 25;
+				extra.addChild(sel);
+				mouseMode = id;
+				reload();
+				drawMap();
+			}
+			buttons.addChild(b);
+		}
+
+		var heightButton = new PIXI.Sprite(heightHudTexture); // Specific buildButton
+		heightButton.position.x = hudPosX;
+		heightButton.position.y = hudPosY + (hudButtonHeight * 0);
+		heightButton.interactive = true;
+		heightButton.mousedown = function(data){
+			clearExtra();
+			heightButton.tint = 0x606060;
+			if(mouseMode != 0){
+				toolValue = 0;
+			}else{
+				if(shift){
+					toolValue--;
+					if(toolValue < 0){
+						toolValue = 16 - 1;
+					}
+				}else{
+					toolValue++;
+					if(toolValue >= 16){
+						toolValue = 0;
+					}
+				}
+			}
+			var w = new PIXI.Sprite(windowTexture);
+			w.position.x = hudPosX + 80;
+			w.position.y = hudPosY + 5;
+			extra.addChild(w);
+			var sel = new PIXI.Text(toolValue, {font: "16px Arial", fill: "white"});
+			sel.position.x = hudPosX + 100;
+			sel.position.y = hudPosY + 25;
+			extra.addChild(sel);
+			mouseMode = 0;
+			reload();
+			drawMap();
+		}
+		buttons.addChild(heightButton);
+
     var topButton = new PIXI.Sprite(topHudTexture);
-    topButton.position.x = hudPosX;
-    topButton.position.y = hudPosY + (hudButtonHeight * 0);
-    topButton.interactive = true;
-    topButton.mousedown = function(data){
-      clearExtra();
-      if(mouseMode != 1){
-        toolValue = 0;
-      }else{
-        toolValue++;
-        if(toolValue >= topTexture[tileSet].length){
-          toolValue = 0;
-        }
-      }
-      var sel = new PIXI.Sprite(topTexture[tileSet][toolValue]);
-      sel.position.x = this.position.x;
-      sel.position.y = this.position.y;
-      extra.addChild(sel);
-      mouseMode = 1;
-      reload();
-      drawMap();
-    }
-    stage.addChild(topButton);
+		buildButton(topButton, 1, topTexture[tileSet]);
 
     var sideButton = new PIXI.Sprite(sideHudTexture);
-    sideButton.position.x = hudPosX;
-    sideButton.position.y = hudPosY + (hudButtonHeight * 1);
-    sideButton.interactive = true;
-    sideButton.mousedown = function(data){
-      clearExtra();
-      if(mouseMode != 2){
-        toolValue = 0;
-      }else{
-        toolValue++;
-        if(toolValue >= sideTexture[tileSet].length){
-          toolValue = 0;
-        }
-      }
-      var sel = new PIXI.Sprite(sideTexture[tileSet][toolValue]);
-      sel.position.x = this.position.x;
-      sel.position.y = this.position.y;
-      extra.addChild(sel);
-      mouseMode = 2;
-      reload();
-      drawMap();
-    }
-    stage.addChild(sideButton);
+    buildButton(sideButton, 2, sideTexture[tileSet]);
 
-    var collButton = new PIXI.Sprite(collHudTexture);
+    var collButton = new PIXI.Sprite(collHudTexture); // Specific buildButton
     collButton.position.x = hudPosX;
-    collButton.position.y = hudPosY + (hudButtonHeight * 2);
+    collButton.position.y = hudPosY + (hudButtonHeight * 3);
     collButton.interactive = true;
     collButton.mousedown = function(data){
       clearExtra();
+			collButton.tint = 0x606060;
       mouseMode = 3;
       reload();
       drawMap();
     }
-    stage.addChild(collButton);
+    buttons.addChild(collButton);
 
     var envButton = new PIXI.Sprite(envHudTexture);
-    envButton.position.x = hudPosX;
-    envButton.position.y = hudPosY + (hudButtonHeight * 3);
-    envButton.interactive = true;
-    envButton.mousedown = function(data){
-      clearExtra();
-      if(mouseMode != 4){
-        toolValue = 0;
-      }else{
-        toolValue++;
-        if(toolValue >= envTexture.length){
-          toolValue = 0;
-        }
-      }
-      var sel = new PIXI.Sprite(envTexture[toolValue]);
-      sel.position.x = this.position.x;
-      sel.position.y = this.position.y;
-      extra.addChild(sel);
-      mouseMode = 4;
-      reload();
-      drawMap();
-    }
-    stage.addChild(envButton);
+    buildButton(envButton, 4, envTexture);
 
     var envcButton = new PIXI.Sprite(envcHudTexture);
-    envcButton.position.x = hudPosX;
-    envcButton.position.y = hudPosY + (hudButtonHeight * 4);
-    envcButton.interactive = true;
-    envcButton.mousedown = function(data){
-      clearExtra();
-      if(mouseMode != 5){
-        toolValue = 0;
-      }else{
-        toolValue++;
-        if(toolValue >= envcTexture.length){
-          toolValue = 0;
-        }
-      }
-      var sel = new PIXI.Sprite(envcTexture[toolValue]);
-      sel.position.x = this.position.x;
-      sel.position.y = this.position.y;
-      extra.addChild(sel);
-      mouseMode = 5;
-      reload();
-      drawMap();
-    }
-    stage.addChild(envcButton);
+    buildButton(envcButton, 5, envcTexture);
 
+		stage.addChild(buttons);
     stage.addChild(extra);
-
-    function heightM(h){
-      var f = document.getElementById(h);
-      toolValue = f.value;
-      f.value = "";
-      clearExtra();
-      mouseMode = 0;
-      reload();
-      drawMap();
-    }
 
     function eventM(e){
       alert("This does nothing yet.");
@@ -665,6 +649,10 @@
 
 					tile.anchor.x =0.5
 					tile.anchor.y = 1;
+
+					if(mouseMode == 3){
+						tile.alpha = .7;
+					}
 
 					tile.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
 					tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2);
