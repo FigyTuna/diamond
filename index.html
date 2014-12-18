@@ -30,39 +30,41 @@
 
 		var personTexture = PIXI.Texture.fromImage("images/character/guy.png");
 
-		var topTexture = new Array(10);//[tile set][image]
+		var topTexture = new Array(1);//[tile set][image]
 		for(var i = 0; i < topTexture.length; i++){
 			topTexture[i] = new Array(10);
 		}
 		for(var i = 0; i < 1; i++){//Constant: number of tile sets
-			for(var j = 0; j < 5; j++){//Constant: number of textures (on all of these.)
+			for(var j = 0; j < 10; j++){//Constant: number of textures (on all of these.)
 				topTexture[i][j] = PIXI.Texture.fromImage("images/tile/"+i+"/top"+j+".png");
 			}
 		}
 
-		var sideTexture = new Array(10);
+		var sideTexture = new Array(1);
 		for(var i = 0; i < sideTexture.length; i++){
-			sideTexture[i] = new Array(10);
+			sideTexture[i] = new Array(5);
 		}
 		for(var i = 0; i < 1; i++){
-			for(var j = 0; j < 3; j++){
+			for(var j = 0; j < 5; j++){
 				sideTexture[i][j] = PIXI.Texture.fromImage("images/tile/"+i+"/side"+j+".png");
 			}
 		}
 
-		var envTexture = new Array(10);
-		for(var i = 1; i < 2; i++){
+		var envTexture = new Array(3);
+		envTexture[0] = PIXI.Texture.fromImage("images/mapmaker/clearEnv.png");
+		for(var i = 1; i < 3; i++){
 			envTexture[i] = PIXI.Texture.fromImage("images/object/env/"+i+".png");
 		}
 
-		var envcTexture = new Array(10);
+		var envcTexture = new Array(4);
+		envcTexture[0] = PIXI.Texture.fromImage("images/mapmaker/clearEnv.png");
 		for(var i = 1; i < 4; i++){
 			envcTexture[i] = PIXI.Texture.fromImage("images/object/envc/"+i+".png");
 		}
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "0.0.4 (Alpha)   Description: Background tiles.";
+		versionNumber = "0.0.5 (Alpha) Warp to new map event added.";
 
 		var area = new PIXI.DisplayObjectContainer(); //Main game container.
 		stage.addChild(area);
@@ -91,7 +93,8 @@
 
 		//------------------------------------- New map
 
-		var currentMap = prompt("Select a map (0 or 1, anything else will result in an error)");
+		//Initial map
+		var currentMap = 0;
 
 		var sizeX = getValue(currentMap, 0);
 		var sizeY = getValue(currentMap, 1);
@@ -104,9 +107,9 @@
 
 		var tileSet = getValue(currentMap, 5);
 
-		var map = new Array(sizeX);
+		var map = new Array(50);
 		for(var i = 0; i < map.length; i++){
-			map[i] = new Array(sizeY);
+			map[i] = new Array(50);
 		}
 
 		for(var i = 0; i < sizeX; i++){
@@ -124,16 +127,31 @@
 			}
 		}
 
-		for(var i = 0; i < sizeX; i++){
-			for(var j = 0; j < sizeY; j++){
-				map[i][j].h = getMap(currentMap, 0, i, j);
-				map[i][j].top = getMap(currentMap, 1, i, j);
-				map[i][j].side = getMap(currentMap, 2, i, j);
-				map[i][j].env = getMap(currentMap, 3, i, j);
-				map[i][j].envc = getMap(currentMap, 4, i, j);
-				map[i][j].cr = getMap(currentMap, 5, i, j);
-				map[i][j].cl = getMap(currentMap, 6, i, j);
-				map[i][j].e = getMap(currentMap, 7, i, j);
+
+
+		function loadMap(){
+			sizeX = getValue(currentMap, 0);
+			sizeY = getValue(currentMap, 1);
+
+			outside = {
+				h: getValue(currentMap, 2),
+				top: getValue(currentMap, 3),
+				side: getValue(currentMap, 4),
+			}
+
+			tileSet = getValue(currentMap, 5);
+
+			for(var i = 0; i < sizeX; i++){
+				for(var j = 0; j < sizeY; j++){
+					map[i][j].h = getMap(currentMap, 0, i, j);
+					map[i][j].top = getMap(currentMap, 1, i, j);
+					map[i][j].side = getMap(currentMap, 2, i, j);
+					map[i][j].env = getMap(currentMap, 3, i, j);
+					map[i][j].envc = getMap(currentMap, 4, i, j);
+					map[i][j].cr = getMap(currentMap, 5, i, j);
+					map[i][j].cl = getMap(currentMap, 6, i, j);
+					map[i][j].e = getMap(currentMap, 7, i, j);
+				}
 			}
 		}
 
@@ -155,6 +173,7 @@
 
 		//------------------------------------- TILES
 
+		loadMap();
 		drawMap();
 
 		//--------------------------------------- PERSON
@@ -393,6 +412,26 @@
 				cj = lastZj;
 			}
 
+			//-------------------------- Event
+			if(map[ci][cj].e != 0){
+				var lines = 0;
+				while(getEvent(map[ci][cj].e, lines, 0) != 0){
+					lines++;
+				}
+				for(var i = 0; i < lines; i++){
+					if(getEvent(map[ci][cj].e, i, 0) == 1){ // Warp
+						currentMap = getEvent(map[ci][cj].e, i, 1);
+						ci = lastZi = getEvent(map[ci][cj].e, i, 2);
+						cj = lastZj = getEvent(map[ci][cj].e, i, 3);
+						reload();
+						loadMap();
+						guyx = (sizeY - 1 + lastZi - lastZj) * (tileWidth/2) + start;
+						guyy = (lastZi + lastZj) * (tileHeight/2) + start;
+						drawMap();
+					}
+				}
+			}
+
 			//Raising to correct height visually.
 
 			var offset = 9 * map[ci][cj].h;
@@ -445,6 +484,25 @@
 		}
 
 		//Drawing
+
+		function reload(){
+			while(bg1.children.length > 0){
+				bg1.removeChild(bg1.getChildAt(0));
+			}
+			for(var i = 0; i < levels.length; i++){
+				while(levels[i].children.length > 0){
+					levels[i].removeChild(levels[i].getChildAt(0));
+				}
+			}
+			for(var i = 0; i < levels.length; i++){
+				while(envLevels[i].children.length > 0){
+					envLevels[i].removeChild(envLevels[i].getChildAt(0));
+				}
+			}
+			while(bg2.children.length > 0){
+				bg2.removeChild(bg2.getChildAt(0));
+			}
+		}
 
 		function drawMap(){
 			for(var i = -bgSpan; i < sizeX + bgSpan; i++){
