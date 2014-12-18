@@ -81,12 +81,13 @@
     var envcHudTexture = new PIXI.Texture.fromImage("images/mapmaker/envc.png");
 
 		var windowTexture = new PIXI.Texture.fromImage("images/mapmaker/window.png");
-
+		var fillTexture = new PIXI.Texture.fromImage("images/mapmaker/fill.png");
+		var scrollTexture = new PIXI.Texture.fromImage("images/mapmaker/scroll.png");
     var collTexture = new PIXI.Texture.fromImage("images/mapmaker/collSide.png");
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "Map Maker 1.1";
+		versionNumber = "Map Maker 1.2 (Fill tool added. Hold Shift to use.)";
 
 		var start = 100; //Depends on other things. Should be centered. Scrolling landscapes too. //FINAL
 		var layers = 50; //Temp variable. Don't know what this will eventually be. //FINAL
@@ -111,6 +112,11 @@
 
 		var mouseMode = 0;
     var toolValue = 0;
+		var fillNext = {
+			x: 0,
+			y: 0,
+			on: false
+		};
 
 		//---------------------------------------- layers
 
@@ -127,6 +133,7 @@
 		}
 		var bg1 = new PIXI.DisplayObjectContainer();
 		var bg2 = new PIXI.DisplayObjectContainer();
+		var fillContainer = new PIXI.DisplayObjectContainer();
 
 		area.addChild(bg1);
 		for(var i = 0; i < layers; i++){
@@ -134,6 +141,7 @@
 				area.addChild(envLevels[i]);
 		}
 		area.addChild(bg2);
+		area.addChild(fillContainer);
 
 		//---------------------------------------- Version text
 
@@ -202,32 +210,76 @@
 				b.tint = 0x606060;
 				if(mouseMode != id){
 					toolValue = 0;
-				}else{
-					if(shift){
-						toolValue--;
-						if(toolValue < 0){
-							toolValue = t.length - 1;
-						}
-					}else{
-						toolValue++;
-						if(toolValue >= t.length){
-							toolValue = 0;
-						}
-					}
 				}
-				var w = new PIXI.Sprite(windowTexture);
-				w.position.x = hudPosX + 80;
-				w.position.y = hudPosY + 5;
-				extra.addChild(w);
-				var sel = new PIXI.Sprite(t[toolValue]);
-				sel.position.x = hudPosX + 90;
-				sel.position.y = hudPosY + 25;
-				extra.addChild(sel);
+				buildWindow(t);
+
 				mouseMode = id;
 				reload();
 				drawMap();
 			}
 			buttons.addChild(b);
+		}
+
+		function buildWindow(t){
+			function checkRange(tv){
+				if(tv < 0){
+					tv = t.length - 1;
+				}
+				if(tv >= t.length){
+					tv = 0;
+				}
+				return tv;
+			}
+
+			var tvu = checkRange(toolValue - 1);
+			var tvd = checkRange(toolValue + 1);
+
+			var w = new PIXI.Sprite(windowTexture);
+			w.position.x = hudPosX + 80;
+			w.position.y = hudPosY + 5;
+			extra.addChild(w);
+
+			var upScroll = new PIXI.Sprite(scrollTexture);
+			upScroll.anchor.x = 0.5;
+			upScroll.position.x = hudPosX + 120;
+			upScroll.position.y = hudPosY + 8;
+			upScroll.interactive = true;
+			upScroll.mousedown = function(data){
+				toolValue--;
+				toolValue = checkRange(toolValue);
+				clearExtra();
+				buildWindow(t);
+			}
+			extra.addChild(upScroll);
+			var sel = new PIXI.Sprite(t[tvu]);
+			sel.anchor.x = 0.5;
+			sel.position.x = hudPosX + 120;
+			sel.position.y = hudPosY + 8 + (1 * 44);
+			extra.addChild(sel);
+			var sel2 = new PIXI.Sprite(t[toolValue]);
+			sel2.anchor.x = 0.5;
+			sel2.position.x = hudPosX + 120;
+			sel2.position.y = hudPosY + 8 + (2 * 44);
+			extra.addChild(sel2);
+			var sel3 = new PIXI.Sprite(t[tvd]);
+			sel3.anchor.x = 0.5;
+			sel3.position.x = hudPosX + 120;
+			sel3.position.y = hudPosY + 8 + (3 * 44);
+			extra.addChild(sel3);
+			var downScroll = new PIXI.Sprite(scrollTexture);
+			downScroll.anchor.x = 0.5;
+			downScroll.anchor.y = 1;
+			downScroll.scale.y = -1;
+			downScroll.position.x = hudPosX + 120;
+			downScroll.position.y = hudPosY + 8 + (4 * 44);
+			downScroll.interactive = true;
+			downScroll.mousedown = function(data){
+				toolValue++;
+				toolValue = checkRange(toolValue);
+				clearExtra();
+				buildWindow(t);
+			}
+			extra.addChild(downScroll);
 		}
 
 		var heightButton = new PIXI.Sprite(heightHudTexture); // Specific buildButton
@@ -258,7 +310,7 @@
 			extra.addChild(w);
 			var sel = new PIXI.Text(toolValue, {font: "16px Arial", fill: "white"});
 			sel.position.x = hudPosX + 100;
-			sel.position.y = hudPosY + 25;
+			sel.position.y = hudPosY + 100;
 			extra.addChild(sel);
 			mouseMode = 0;
 			reload();
@@ -516,6 +568,34 @@
 			}
 		}
 
+		function changeTile(ci, cj){
+			if(mouseMode == 0){
+				if(toolValue >= 0){// Move to other error handled blahalbjasdohjb
+					map[ci][cj].h = toolValue;
+				}
+			}else if(mouseMode == 1){
+				map[ci][cj].top = toolValue;
+			}else if(mouseMode == 2){
+				map[ci][cj].side = toolValue;
+			}else if(mouseMode == 3){
+				if(!map[ci][cj].cl && !map[ci][cj].cr){
+					map[ci][cj].cl = 1;
+				}else if(map[ci][cj].cl && !map[ci][cj].cr){
+					map[ci][cj].cl = 0;
+					map[ci][cj].cr = 1;
+				}else if(!map[ci][cj].cl && map[ci][cj].cr){
+					map[ci][cj].cl = 1;
+				}else{
+					map[ci][cj].cl = 0;
+					map[ci][cj].cr = 0;
+				}
+			}else if(mouseMode == 4){
+				map[ci][cj].env = toolValue;
+			}else if(mouseMode == 5){
+				map[ci][cj].envc = toolValue;
+			}
+		}
+
 		function drawMap(){
 			for(var i = -bgSpan; i < bgSpan + sizeX; i++){
 				for(var j = -bgSpan; j < bgSpan + sizeY; j++){
@@ -675,43 +755,43 @@
                 }
               }
             }
-						if(mouseMode == 0){ // Height edit
-							if(toolValue >= 0){// Move to other error handled blahalbjasdohjb
-								map[ci][cj].h = toolValue;
-								reload();
-								drawMap();
+						if(shift){
+							fillNext.x = ci;
+							fillNext.y = cj;
+							fillNext.on = true;
+							fillIcon = new PIXI.Sprite(fillTexture);
+							fillIcon.anchor.x = 0.5;
+							fillIcon.anchor.y = 1;
+							fillIcon.position.x = (sizeY - 1 + ci - cj) * (tileWidth/2) + start;
+							fillIcon.position.y = (ci + cj) * (tileHeight/2) + start - (sideHeight * map[ci][cj].h);
+							fillContainer.addChild(fillIcon);
+						}else{
+							if(fillNext.on){
+								fillNext.on = false;
+								var x1 = ci;
+								var x2 = fillNext.x;
+								var y1 = cj;
+								var y2 = fillNext.y;
+								if(fillNext.x < ci){
+									x1 = fillNext.x;
+									x2 = ci;
+								}
+								if(fillNext.y < cj){
+									y1 = fillNext.y;
+									y2 = cj;
+								}
+								for(var k = x1; k <= x2; k++){
+									for(var l = y1; l <= y2; l++){
+										changeTile(k, l);
+									}
+								}
+								fillContainer.removeChild(fillContainer.getChildAt(0));
+							}else{
+								changeTile(ci, cj);
 							}
-						}else if(mouseMode == 1){
-              map[ci][cj].top = toolValue;
-              reload();
-              drawMap();
-            }else if(mouseMode == 2){
-              map[ci][cj].side = toolValue;
-              reload();
-              drawMap();
-            }else if(mouseMode == 3){
-              if(!map[ci][cj].cl && !map[ci][cj].cr){
-                map[ci][cj].cl = 1;
-              }else if(map[ci][cj].cl && !map[ci][cj].cr){
-                map[ci][cj].cl = 0;
-                map[ci][cj].cr = 1;
-              }else if(!map[ci][cj].cl && map[ci][cj].cr){
-                map[ci][cj].cl = 1;
-              }else{
-                map[ci][cj].cl = 0;
-                map[ci][cj].cr = 0;
-              }
-              reload();
-              drawMap();
-            }else if(mouseMode == 4){
-              map[ci][cj].env = toolValue;
-              reload();
-              drawMap();
-            }else if(mouseMode == 5){
-              map[ci][cj].envc = toolValue;
-              reload();
-              drawMap();
-            }
+						}
+						reload();
+						drawMap();
 					}
 
 					levels[i + j].addChild(tile);
