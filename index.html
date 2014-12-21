@@ -32,10 +32,10 @@
 
 		var topTexture = new Array(1);//[tile set][image]
 		for(var i = 0; i < topTexture.length; i++){
-			topTexture[i] = new Array(10);
+			topTexture[i] = new Array(11);
 		}
 		for(var i = 0; i < 1; i++){//Constant: number of tile sets
-			for(var j = 0; j < 10; j++){//Constant: number of textures (on all of these.)
+			for(var j = 0; j < 11; j++){//Constant: number of textures (on all of these.)
 				topTexture[i][j] = PIXI.Texture.fromImage("images/tile/"+i+"/top"+j+".png");
 			}
 		}
@@ -64,12 +64,12 @@
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "0.0.5 (Alpha) Warp to new map event added.";
+		versionNumber = "0.1.0 (Alpha) Bug fixes for events. Bugs in collision still exist and they will be worked on. Loading zones need to be sped up.";
 
 		var area = new PIXI.DisplayObjectContainer(); //Main game container.
 		stage.addChild(area);
 
-		var start = 100; //Depends on other things. Should be centered. Scrolling landscapes too. //FINAL
+		var start = 250; //Depends on other things. Should be centered. Scrolling landscapes too. //FINAL
 		var layers = 50; //Temp variable. Don't know what this will eventually be. //FINAL
 
 		var tileWidth = 50; //Size of the tile images in pixels
@@ -84,8 +84,8 @@
 		var lr = 0; //Distance in left, right, up, and down that the player will be in the next tick.
 		var ud = 0;
 
-		var lastZi = 1; //Where the player was last tick.
-		var lastZj = 1;
+		var lastZi = 2; //Where the player was last tick.
+		var lastZj = 2;
 
 		var speed = 3; //Speed the player travels. Maybe this will be altered during game play.
 
@@ -112,8 +112,8 @@
 			map[i] = new Array(50);
 		}
 
-		for(var i = 0; i < sizeX; i++){
-			for(var j = 0; j < sizeY; j++){
+		for(var i = 0; i < 50; i++){
+			for(var j = 0; j < 50; j++){
 				map[i][j] = {
 					h: 0,
 					top: 0,
@@ -421,8 +421,10 @@
 				for(var i = 0; i < lines; i++){
 					if(getEvent(map[ci][cj].e, i, 0) == 1){ // Warp
 						currentMap = getEvent(map[ci][cj].e, i, 1);
-						ci = lastZi = getEvent(map[ci][cj].e, i, 2);
-						cj = lastZj = getEvent(map[ci][cj].e, i, 3);
+						lastZi = getEvent(map[ci][cj].e, i, 2);
+						lastZj = getEvent(map[ci][cj].e, i, 3);
+						ci = lastZi;
+						cj = lastZj;
 						reload();
 						loadMap();
 						guyx = (sizeY - 1 + lastZi - lastZj) * (tileWidth/2) + start;
