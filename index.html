@@ -17,9 +17,11 @@
 	<script>
 
 		//PIXI Stuff
+		var screenWidth = 1000;//FINALS
+		var screenHeight = 600;
 
 		var stage = new PIXI.Stage(0x505050);
-		var renderer = PIXI.autoDetectRenderer(1000, 600); //Should make the size the size of the window eventually.
+		var renderer = PIXI.autoDetectRenderer(screenWidth, screenHeight); //Should make the size the size of the window eventually.
 		document.body.appendChild(renderer.view);
 		requestAnimFrame(animate);
 
@@ -86,6 +88,9 @@
 		var up = false;
 		var right = false;
 		var down = false;
+
+		var cameraX = 0;
+		var cameraY = 0;
 
 		var lr = 0; //Distance in left, right, up, and down that the player will be in the next tick.
 		var ud = 0;
@@ -473,6 +478,25 @@
 
 			person.position.x = guyx;
 			person.position.y = guyy - offset;
+
+			//Camera movement
+
+			var cameraFollowDistance = 50;
+
+			if(person.position.x - cameraX < (screenWidth/2) - cameraFollowDistance){
+				cameraX = person.position.x - (screenWidth/2) + cameraFollowDistance;
+			}
+			if(person.position.x - cameraX > (screenWidth/2) + cameraFollowDistance){
+				cameraX = person.position.x - (screenWidth/2) - cameraFollowDistance;
+			}
+			if(person.position.y - cameraY < (screenHeight/2) - cameraFollowDistance){
+				cameraY = person.position.y - (screenHeight/2) + cameraFollowDistance;
+			}
+			if(person.position.y - cameraY > (screenHeight/2) + cameraFollowDistance){
+				cameraY = person.position.y - (screenHeight/2) - cameraFollowDistance;
+			}
+			area.position.x = -cameraX;
+			area.position.y = -cameraY;
 
 			//Map and layers
 			while(area.children.length > 0){
