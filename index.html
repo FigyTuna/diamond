@@ -64,7 +64,7 @@
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "0.1.0a (Alpha) Bug fixes for events. Bugs in collision still exist and they will be worked on.";
+		versionNumber = "0.1.1 (Alpha) Starting Point added.";
 
 		var area = new PIXI.DisplayObjectContainer(); //Main game container.
 		stage.addChild(area);
@@ -84,8 +84,8 @@
 		var lr = 0; //Distance in left, right, up, and down that the player will be in the next tick.
 		var ud = 0;
 
-		var lastZi = 2; //Where the player was last tick.
-		var lastZj = 2;
+		var lastZi = 0; //Where the player was last tick.
+		var lastZj = 0;
 
 		var speed = 3; //Speed the player travels. Maybe this will be altered during game play.
 
@@ -126,7 +126,19 @@
 				}
 			}
 		}
-
+			
+		//Find starting point
+		for(var m = 0; m < findMaps(); m++){
+			for(var i = 0; i < findTile(); i++){
+				for(var j = 0; j < findTile(); j++){
+					if(getEvent(getMap(m, 7, i, j), 0, 0) == 2){
+						currentMap = m;
+						lastZi = i;
+						lastZj = j;
+					}
+				}
+			}
+		}
 
 
 		function loadMap(){
@@ -488,6 +500,7 @@
 		//Drawing
 
 		function reload(){
+			//Remove eveything map related.
 			while(bg1.children.length > 0){
 				bg1.removeChild(bg1.getChildAt(0));
 			}
@@ -507,11 +520,13 @@
 		}
 
 		function drawMap(){
+			//Background
 			for(var i = -bgSpan; i < sizeX + bgSpan; i++){
 				for(var j = -bgSpan; j < sizeY + bgSpan; j++){
 					var bgroud1 = (i < 0 || j < 0);
 					var ground2 = (i >= sizeX || j >= sizeY);
 					if(bgroud1){
+						//Background tile with walls
 						var tile = new PIXI.Sprite(topTexture[tileSet][outside.top]);
 
 						tile.anchor.x = 0.5;
@@ -522,7 +537,9 @@
 
 						bg1.addChild(tile);
 
+						//Walls
 						for(var k = outside.h; k > 0; k--){
+							//Right
 							if(j >= 0 && j < sizeY && i == -1){
 								var under = new PIXI.Sprite(sideTexture[tileSet][outside.side]);
 
@@ -534,7 +551,7 @@
 
 								bg1.addChild(under);
 							}
-
+							//Left
 							if(i >= 0 && i < sizeX && j == -1){
 								var under2 = new PIXI.Sprite(sideTexture[tileSet][outside.side]);
 
@@ -551,6 +568,7 @@
 						}
 
 					}else if(ground2){
+						//Background tiles in front without walls
 						var tile = new PIXI.Sprite(topTexture[tileSet][outside.top]);
 
 						tile.anchor.x = 0.5;
@@ -563,8 +581,10 @@
 					}
 				}
 			}
+			//Playing map
 			for(var i = 0; i < sizeX; i++){
 				for(var j = 0; j < sizeY; j++){
+					//Tile
 					var tile = new PIXI.Sprite(topTexture[tileSet][map[i][j].top]);
 
 					tile.anchor.x =0.5
@@ -575,7 +595,9 @@
 
 					levels[i + j].addChild(tile);
 
+					//Walls
 					for(var k = map[i][j].h; k > 0; k--){
+						//Right
 						if(i == sizeX - 1 || k > map[i+1][j].h){
 							var under = new PIXI.Sprite(sideTexture[tileSet][map[i][j].side]);
 
@@ -587,7 +609,7 @@
 
 							levels[i + j].addChild(under);
 						}
-
+						//Left
 						if(j == sizeY - 1 || k > map[i][j+1].h){
 							var under2 = new PIXI.Sprite(sideTexture[tileSet][map[i][j].side]);
 

@@ -19,27 +19,27 @@
 <body>
 	 <form onsubmit="newMap('mx', 'my', 'ts'); return false;">
 	 	<p>New: Size X / Size Y / Tileset (tileset must be 0)</p>
-		<input type="text" name="mx" id="mx" value="x"></input>
-		<input type="text" name="my" id="my" value="y"></input>
-		<input type="text" name="ts" id="ts" value="t"></input>
+		<input type="text" name="mx" id="mx" value="x">
+		<input type="text" name="my" id="my" value="y">
+		<input type="text" name="ts" id="ts" value="t">
 		<input type="submit" name="submit" value="New">
 	</form>
 	<form onsubmit="go('outputText'); return false;">
 	 	<p>Save and Load: Save output / Save / Load</p>
-	 	<input type="text" name="out" id="outputText" value=""></input>
+	 	<input type="text" name="out" id="outputText" value="">
 		<input type="submit" name="submit" value="Save">
     	<input type="file" name="file" id="file">
 	</form>
   	<form onsubmit="eventPlace('e'); return false;">
 	 	<p>Event: Selected / Place (click twice for remove) / Load</p>
-    	<input type="text" name="e" id="e" value="remove" readonly="true"></input>
+    	<input type="text" name="e" id="e" value="remove" readonly="true">
 		<input type="submit" name="event" id="event" value="Place">
     	<input type="file" name="file2" id="file2">
   	</form>
-	<form onsubmit="compile('output2'); return false;">
+	<form onsubmit="compile2('output2'); return false;">
 	 	<p>Compile: Compile output / Compile / Load all maps / Load all events</p>
-		<input type="text" name="out" id="output2" value=""></input>
-		<input type="submit" name="submit" value="Compile">
+		<input type="text" name="output2" id="output2" value="">
+		<input type="submit" name="compile" value="Compile">
 		<input type="file" name="file3" id="file3" multiple="true">
 		<input type="file" name="file4" id="file4" multiple="true">
 	</form>
@@ -101,10 +101,10 @@
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "Map Maker 1.5 (Loading zone speed up. Cleaner look.)";
+		versionNumber = "Map Maker 1.6 (Starting point added.)";
 
 		var start = 100; //Depends on other things. Should be centered. Scrolling landscapes too. //FINAL
-		var layers = 50; //Temp variable. Don't know what this will eventually be. //FINAL
+		var layers = 100; //Temp variable. Don't know what this will eventually be. //FINAL
 
 		var tileWidth = 50; //Size of the tile images in pixels
 		var tileHeight = 24;
@@ -1002,57 +1002,7 @@
 			}
 		}
 
-		//----------------------------------------------------- Map converter
-
-		function compile(output2){
-			var field = document.getElementById(output2);
-			var o = "";
-
-			o += "var v1=new Array(50);for(var i=0;i<v1.length;i++){v1[i]=new Array(6);}for(var i=0;i<v1.length;i++){for(var j=0;j<v1[i].length;j++){v1[i][j]=0;}}";
-			for(var i = 0; i < values.length; i++){
-				for(var j = 0; j < values[i].length; j++){
-					if(values[i][j] != "0"){
-						o += "v1[" + i + "][" + j + "]=" + values[i][j] + ";";
-					}
-				}
-			}
-			o += "function getValue(m,p){return v1[m][p]}var v2=new Array(10);for(var i=0;i<v2.length;i++){v2[i]=new Array(8);for(var j=0;j<v2[i].length;j++){v2[i][j]=new Array(50);for(var k=0;k<v2[i][j].length;k++){v2[i][j][k]=new Array(50);}}}for(var i=0;i<v2.length;i++){for(var j=0;j<v2[i].length;j++){for(var k=0;k<v2[i][j].length;k++){for(var l=0;l<v2[i][j][k].length;l++){v2[i][j][k][l]=0;}}}}"
-			for(var i = 0; i < values2.length; i++){
-				for(var j = 0; j < values2[i].length; j++){
-					for(var k = 0; k < values2[i][j].length; k++){
-						for(var l = 0; l < values2[i][j][k].length; l++){
-							if(values2[i][j][k][l] != "0"){
-								for(var b = 0; b < nextEvent; b++){
-									if(values2[i][j][k][l] == nameTable[1][b]){
-										values2[i][j][k][l] = b;
-									}
-								}
-								o += "v2[" + i + "][" + j + "][" + k + "][" + l + "]=" + values2[i][j][k][l] + ";";
-							}
-						}
-					}
-				}
-			}
-			o += "function getMap(m, t, x, y){return v2[m][t][x][y]}var v3=new Array(50);for(var i=0;i<v3.length;i++){v3[i]=new Array(50);for(var j=0;j<v3[i].length;j++){v3[i][j]=new Array(10);}}for(var i=0;i<v3.length;i++){for(var j=0;j<v3[i].length;j++){for(var k=0;k<v3[i][j].length;k++){v3[i][j][k]=0;}}}"
-			for(var i = 0; i < values3.length; i++){
-				for(var j = 0; j < values3[i].length; j++){
-					for(var k = 0; k < values3[i][j].length; k++){
-						if(values3[i][j][k] != "0"){
-							for(var b = 0; b < nextMap; b++){
-								if(values3[i][j][k] == nameTable[0][b]){
-									values3[i][j][k] = b;
-								}
-							}
-							o += "v3[" + i + "][" + j + "][" + k + "]=" + values3[i][j][k] + ";";
-						}
-					}
-				}
-			}
-			o += "function getEvent(e,s,f){return v3[e][s][f]}";
-
-
-			field.value = o;
-		}
+		// ------------------------------------ Values for map converter
 
 		var values = new Array(50);
 		for(var i = 0; i < values.length; i++){
@@ -1088,6 +1038,66 @@
 
 		resetValues(true);
 		resetValues(false);
+
+		//----------------------------------------------------- Map converter
+
+		function compile2(output2){
+			var field = document.getElementById(output2);
+			var o = "";
+			var howManyMaps = "20";//FINALS
+			var howManyTiles = "100";
+			var howManyEvents = "50";
+
+			o += "var hm=";
+			o += howManyMaps;
+			o += ";var ht=";
+			o += howManyTiles;
+			o += ";var he=";
+			o += howManyEvents;
+			o += ";function findMaps(){return hm;}function findTile(){return ht;}function findEvents(){return he;}var v1=new Array(" + howManyMaps + ");for(var i=0;i<v1.length;i++){v1[i]=new Array(6);}for(var i=0;i<v1.length;i++){for(var j=0;j<v1[i].length;j++){v1[i][j]=0;}}";
+			for(var i = 0; i < values.length; i++){
+				for(var j = 0; j < values[i].length; j++){
+					if(values[i][j] != "0"){
+						o += "v1[" + i + "][" + j + "]=" + values[i][j] + ";";
+					}
+				}
+			}
+			o += "function getValue(m,p){return v1[m][p]}var v2=new Array(" + howManyMaps + ");for(var i=0;i<v2.length;i++){v2[i]=new Array(8);for(var j=0;j<v2[i].length;j++){v2[i][j]=new Array(" + howManyTiles + ");for(var k=0;k<v2[i][j].length;k++){v2[i][j][k]=new Array(" + howManyTiles + ");}}}for(var i=0;i<v2.length;i++){for(var j=0;j<v2[i].length;j++){for(var k=0;k<v2[i][j].length;k++){for(var l=0;l<v2[i][j][k].length;l++){v2[i][j][k][l]=0;}}}}"
+			for(var i = 0; i < values2.length; i++){
+				for(var j = 0; j < values2[i].length; j++){
+					for(var k = 0; k < values2[i][j].length; k++){
+						for(var l = 0; l < values2[i][j][k].length; l++){
+							if(values2[i][j][k][l] != "0"){
+								for(var b = 0; b < nextEvent; b++){
+									if(values2[i][j][k][l] == nameTable[1][b]){
+										values2[i][j][k][l] = b;
+									}
+								}
+								o += "v2[" + i + "][" + j + "][" + k + "][" + l + "]=" + values2[i][j][k][l] + ";";
+							}
+						}
+					}
+				}
+			}
+			o += "function getMap(m, t, x, y){return v2[m][t][x][y]}var v3=new Array(50);for(var i=0;i<v3.length;i++){v3[i]=new Array(50);for(var j=0;j<v3[i].length;j++){v3[i][j]=new Array(" + howManyMaps + ");}}for(var i=0;i<v3.length;i++){for(var j=0;j<v3[i].length;j++){for(var k=0;k<v3[i][j].length;k++){v3[i][j][k]=0;}}}"
+			for(var i = 0; i < values3.length; i++){
+				for(var j = 0; j < values3[i].length; j++){
+					for(var k = 0; k < values3[i][j].length; k++){
+						if(values3[i][j][k] != "0"){
+							for(var b = 0; b < nextMap; b++){
+								if(values3[i][j][k] == nameTable[0][b]){
+									values3[i][j][k] = b;
+								}
+							}
+							o += "v3[" + i + "][" + j + "][" + k + "]=" + values3[i][j][k] + ";";
+						}
+					}
+				}
+			}
+			o += "function getEvent(e,s,f){return v3[e][s][f]}";
+
+			field.value = o;
+		}
 
 		function resetValues(em){
 			if(em){
@@ -1190,10 +1200,14 @@
 
 							while(true){
 								values3[nextEvent][howManyLines][0] = ""+m.substring(0, m.indexOf(" "));
+								console.log(m);
 								m = m.substring(m.indexOf(" ") + 1);
 
-								if(values3[nextEvent][howManyLines][0] == "warp"){
+
+								if(values3[nextEvent][howManyLines][0] == "warp"){//------------------------------IMPORTANT STUFF
 									values3[nextEvent][howManyLines][0] = "1";
+								}else if(values3[nextEvent][howManyLines][0] == "start"){
+									values3[nextEvent][howManyLines][0] = "2";
 								}else{//All other event types will go here.
 									values3[nextEvent][howManyLines][0] = "0";
 									break;
@@ -1227,4 +1241,71 @@
 		document.getElementById('file4').addEventListener('change', readEventFiles, false);
 
 	</script>
+	<p>
+	------------------------HELP------------------------<br>
+	<br>
+	-----CREATING A MAP:<br>
+	At the top of the screen, enter the size of your map in x and y.<br>
+	They can be anything from 1 - 24<br>
+	Tileset must be 0 for now.<br>
+	<br>
+	-----SAVING YOUR MAP:<br>
+	Click the save button in the menu up top.<br>
+	Copy all the contents of what appears in the box to the left into a new text document on your computer.<br>
+	Call the text document whatever you want. DO NOT USE SPACES!
+	<br>
+	-----LOADING YOUR MAP:<br>
+	Click the button to the right of the save button.<br>
+	It will either say "browse" or "choose file" depending on your browser.<br>
+	Select the text document that you saved before.<br>
+	<br>
+	------------------------<br>
+	-----MAKING WARP POINTS (EVENT):<br>
+	Open a text editor and create a new text document.<br>
+	Call it something related to what it does like "warp_to_forest.txt". NO SPACES!<br>
+	Into the text document, type:<br>
+	<br>
+	warp (name of map to warp to) (x coordinate) (y coordinate)<br>
+	end<br>
+	<br>
+	-----MAKING A STARTING POINT:<br>
+	This is where the player will spawn in the very beggining.<br>
+	Do the same as a warp but type this:<br>
+	<br>
+	start null<br>
+	end<br>
+	<br>
+	-----PLACING EVENTS:<br>
+	Click "browse" or "choose file" button to the right of "place event".<br>
+	Click "place event". Tip: Click "place event" again to switch to remove mode.<br>
+	Click on a tile to place the event.<br>
+	<br>
+	------------------------<br>
+	-----COMPILING INTO A PLAYABLE VERSION.<br>
+	Put all of you maps into one folder on your computer.<br>
+	Do the same for all of your events.<br>
+	Click on the leftmost "browse" or "choose file" button to the right of the "compile" button and select all of your maps from the folder.<br>
+	Click on the "browse" or "choose file" to the right of the other buttons and choose all of your event files from the folder.<br>
+	Click compile.<br>
+	Copy the contents of the box to left of the "compile" button into a new text document.<br>
+	Do not save as a ".txt" file!<br>
+	Save as "mapfile.js".<br>
+	<br>
+	-----PLAYING YOUR MAP:<br>
+	Download the "test your map with this" folder from the drive.<br>
+	If it's zipped, unzip it.<br>
+	Put the "mapfile.js" file you compiled into the folder with the other contents. (index.html, pixi.js, and images folder)<br>
+	Open "index.html" with firefox or internet explorer. (Chrome will not work)<br>
+	<br>
+	<br>
+	<br>
+	<br>
+	------------------------All Scripting Commands------------------------<br>
+	<br>
+	warp (name of map to warp to) (x coordinate) (y coordinate)<br>
+	(A way to warp from one map to another. Can also be used to warp to a new place in the same map. Although that might not be so later.)<br>
+	<br>
+	start null<br>
+	(You may only have one of these per game. It is the place where the play starts when the game is first played.)<br>
+	<br>
 </body>
