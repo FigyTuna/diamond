@@ -28,43 +28,49 @@
 		//Textures need to be improved.
 		//Right now you have to manually imput how many textures there are.
 
+		var textureNumTilesets = 1;
+		var textureNumTop = 12;//FINALS
+		var textureNumSide = 5;
+		var textureNumEnv = 3;
+		var textureNumEnvc = 7;
+
 		var personTexture = PIXI.Texture.fromImage("images/character/guy.png");
 
-		var topTexture = new Array(1);//[tile set][image]
+		var topTexture = new Array(textureNumTilesets);//[tile set][image]
 		for(var i = 0; i < topTexture.length; i++){
-			topTexture[i] = new Array(11);
+			topTexture[i] = new Array(textureNumTop);
 		}
-		for(var i = 0; i < 1; i++){//Constant: number of tile sets
-			for(var j = 0; j < 11; j++){//Constant: number of textures (on all of these.)
+		for(var i = 0; i < textureNumTilesets; i++){//Constant: number of tile sets
+			for(var j = 0; j < textureNumTop; j++){//Constant: number of textures (on all of these.)
 				topTexture[i][j] = PIXI.Texture.fromImage("images/tile/"+i+"/top"+j+".png");
 			}
 		}
 
-		var sideTexture = new Array(1);
+		var sideTexture = new Array(textureNumTilesets);
 		for(var i = 0; i < sideTexture.length; i++){
-			sideTexture[i] = new Array(5);
+			sideTexture[i] = new Array(textureNumSide);
 		}
-		for(var i = 0; i < 1; i++){
-			for(var j = 0; j < 5; j++){
+		for(var i = 0; i < textureNumTilesets; i++){
+			for(var j = 0; j < textureNumSide; j++){
 				sideTexture[i][j] = PIXI.Texture.fromImage("images/tile/"+i+"/side"+j+".png");
 			}
 		}
 
-		var envTexture = new Array(3);
+		var envTexture = new Array(textureNumEnv);
 		envTexture[0] = PIXI.Texture.fromImage("images/mapmaker/clearEnv.png");
-		for(var i = 1; i < 3; i++){
+		for(var i = 1; i < textureNumEnv; i++){
 			envTexture[i] = PIXI.Texture.fromImage("images/object/env/"+i+".png");
 		}
 
-		var envcTexture = new Array(4);
+		var envcTexture = new Array(textureNumEnvc);
 		envcTexture[0] = PIXI.Texture.fromImage("images/mapmaker/clearEnv.png");
-		for(var i = 1; i < 4; i++){
+		for(var i = 1; i < textureNumEnvc; i++){
 			envcTexture[i] = PIXI.Texture.fromImage("images/object/envc/"+i+".png");
 		}
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "0.1.1 (Alpha) Starting Point added.";
+		versionNumber = "0.1.1a (Alpha) Starting Point added. New wall and blank background textures.";
 
 		var area = new PIXI.DisplayObjectContainer(); //Main game container.
 		stage.addChild(area);
