@@ -7,11 +7,11 @@
 		body {
 			margin: 0;
 			padding: 0;
-			background-color: #303030;
+			background-color: #202020;
 		}
 		p{
 			margin: 0;
-			color: #999999;
+			color: #bbbbbb;
 		}
 	</style>
 	<script src="pixi.js"></script>
@@ -109,7 +109,7 @@
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "Map Maker 1.6 (Starting point added.)";
+		versionNumber = "Map Maker 1.7 (Some things cleaned up. Max X and Y now 50.)";
 
 		var start = 100; //Depends on other things. Should be centered. Scrolling landscapes too. //FINAL
 		var layers = 100; //Temp variable. Don't know what this will eventually be. //FINAL
@@ -174,13 +174,6 @@
 		version.position.x = version.position.y = 10;
 
 		stage.addChild(version);
-
-		var helpText = new PIXI.Text("Controls:      wasd / arrow keys: move camera.        Shift click: fill tool", {font: "12px Arial", fill: "white"});
-
-		helpText.position.x = 10;
-		helpText.position.y = 570;
-
-		stage.addChild(helpText);
 
 	    //---------------------------------------- Map
 
@@ -417,8 +410,13 @@
 			if(f){
 				var r = new FileReader();
 				r.onload = function(e){
-					eventName = f.name;
-					eventName = eventName.substring(0, eventName.indexOf(".txt"));
+					var contents = e.target.result;
+					if(parseInt(contents.substring(0, contents.indexOf(" "))) > -500){
+						alert("This is not a valid event file.");
+					}else{
+						eventName = f.name;
+						eventName = eventName.substring(0, eventName.indexOf(".txt"));
+					}
 				}
 				r.readAsText(f);
 			}
@@ -431,31 +429,36 @@
     	function newMap(mx, my, ts){
 		    var f = document.getElementById(mx);
 		    sizeX = parseInt(f.value);
-		    f.value = "x";
+		    f.value = "";
 	      	var f2 = document.getElementById(my);
 		    sizeY = parseInt(f2.value);
-		    f2.value = "y";
+		    f2.value = "";
 		    var f3 = document.getElementById(ts);
 		    tileSet = parseInt(f3.value);
-		    f3.value = "t";
+		    f3.value = "";
 
-      		for(var i = 0; i < sizeX; i++){
-        		for(var j = 0; j < sizeY; j++){
-          			map[i][j] = {
-            			h: 0,
-            			top: 0,
-            			side: 0,
-            			env: 0,
-            			envc: 0,
-            			cr: false, // lower right (collisions)
-            			cl: false, // lower left
-            			e: 0
-          			}
-        		}
-      		}
+		    if(sizeX > 0 && sizeX < 51 && sizeY > 0 && sizeY < 51 && tileSet == 0){
 
-      		reload();
-      		drawMap();
+	      		for(var i = 0; i < sizeX; i++){
+	        		for(var j = 0; j < sizeY; j++){
+	          			map[i][j] = {
+	            			h: 0,
+	            			top: 0,
+	            			side: 0,
+	            			env: 0,
+	            			envc: 0,
+	            			cr: false, // lower right (collisions)
+	            			cl: false, // lower left
+	            			e: 0
+	          			}
+	        		}
+	      		}
+
+	      		reload();
+	      		drawMap();
+	      	}else{
+	      		alert("X and Y must be 1 - 50 and tileSet must be 0");
+	      	}
     	}
 
     	//----------------------------------------------------------- Map input
@@ -475,13 +478,20 @@
 
     	document.getElementById('file').addEventListener('change', readSingleFile, false);
 
-			function mapIn(m){
+		function mapIn(m){
 
-				sizeX = parseInt(m.substring(0, m.indexOf(" ")));
-				m = m.substring(m.indexOf(" ") + 1);
+			var tempSizeX = parseInt(m.substring(0, m.indexOf(" ")));
+			m = m.substring(m.indexOf(" ") + 1);
 
-				sizeY = parseInt(m.substring(0, m.indexOf(" ")));
-				m = m.substring(m.indexOf(" ") + 1);
+			var tempSizeY = parseInt(m.substring(0, m.indexOf(" ")));
+			m = m.substring(m.indexOf(" ") + 1);
+
+			if(!(tempSizeX > 0 && tempSizeX < 1000 && tempSizeY > 0 && tempSizeY < 1000)){//Just some random tests. Should catch at least any event file passed in.
+				alert("This is not a valid map file.");
+			}else{
+				sizeX = tempSizeX;
+				
+				sizeY = tempSizeY;
 
 				outside.h = parseInt(m.substring(0, m.indexOf(" ")));
 				m = m.substring(m.indexOf(" ") + 1);
@@ -518,209 +528,210 @@
 				reload();
 				drawMap();
 			}
+		}
 
-			//----------------------------------------- Map output
+		//----------------------------------------- Map output
 
-			function go(outputText){
-				var field = document.getElementById(outputText);
-				var o = "";
-				o += sizeX + " ";
-				o += sizeY + " ";
-				o += outside.h + " ";
-				o += outside.top + " ";
-				o += outside.side + " ";
-				o += tileSet + " ";
-				for(var i = 0; i < sizeX; i++){
-					for(var j = 0; j < sizeY; j++){
-						o += map[i][j].h + " ";
-						o += map[i][j].top + " ";
-						o += map[i][j].side + " ";
-						o += map[i][j].env + " ";
-						o += map[i][j].envc + " ";
-						o += (0 + map[i][j].cr) + " "; // Not sure if +0 is needed.
-						o += (0 + map[i][j].cl) + " ";
-						o += map[i][j].e + " ";
-					}
-				}
-				field.value = o;
-			}
-
-			//-------------------------------------------- INPUT
-
-			document.addEventListener('keydown', function(event){
-				var code = event.keyCode;
-
-				if(code == 65 || code == 37){ //A
-					left = true;
-				}
-				if(code == 87 || code == 38){ //W
-					up = true;
-				}
-				if(code == 68 || code == 39){ //D
-					right = true;
-				}
-				if(code == 83 || code == 40){ //S
-					down = true;
-				}
-				if(code == 32){ //Space
-					space = true;
-				}
-				if(code == 16){ //Shift
-					shift = true;
-				}
-			});
-
-			document.addEventListener('keyup', function(event){
-				var code = event.keyCode;
-
-				if(code == 65 || code == 37){ //A
-					left = false;
-				}
-				if(code == 87 || code == 38){ //W
-					up = false;
-				}
-				if(code == 68 || code == 39){ //D
-					right = false;
-				}
-				if(code == 83 || code == 40){ //S
-					down = false;
-				}
-				if(code == 32){ //Space
-					space = false;
-				}
-				if(code == 16){ //Shift
-					shift = false;
-				}
-			});
-
-			//--------------------------------------------------------------------- GAME LOOP
-
-			function animate(){
-				requestAnimFrame(animate);
-
-				update();
-
-				renderer.render(stage);
-			}
-
-			function update(){
-				var speedAfter = speed; // Camera speed up. This feels like messy code but whatever.
-				if(shift){
-					speedAfter += 4;
-				}
-				if(left && !right){
-					cameraX -= speedAfter;
-				}
-				if(up && !down){
-					cameraY -= speedAfter;
-				}
-				if(right && !left){
-					cameraX += speedAfter;
-				}
-				if(down && !up){
-					cameraY += speedAfter;
-				}
-
-				area.position.x = -cameraX;
-				area.position.y = -cameraY;
-			}
-
-			function reload(){
-				while(bg1.children.length > 0){
-					bg1.removeChild(bg1.getChildAt(0));
-				}
-				for(var i = 0; i < levels.length; i++){
-					while(levels[i].children.length > 0){
-						levels[i].removeChild(levels[i].getChildAt(0));
-					}
-				}
-				for(var i = 0; i < levels.length; i++){
-					while(envLevels[i].children.length > 0){
-						envLevels[i].removeChild(envLevels[i].getChildAt(0));
-					}
-				}
-				while(bg2.children.length > 0){
-					bg2.removeChild(bg2.getChildAt(0));
+		function go(outputText){
+			var field = document.getElementById(outputText);
+			var o = "";
+			o += sizeX + " ";
+			o += sizeY + " ";
+			o += outside.h + " ";
+			o += outside.top + " ";
+			o += outside.side + " ";
+			o += tileSet + " ";
+			for(var i = 0; i < sizeX; i++){
+				for(var j = 0; j < sizeY; j++){
+					o += map[i][j].h + " ";
+					o += map[i][j].top + " ";
+					o += map[i][j].side + " ";
+					o += map[i][j].env + " ";
+					o += map[i][j].envc + " ";
+					o += (0 + map[i][j].cr) + " "; // Not sure if +0 is needed.
+					o += (0 + map[i][j].cl) + " ";
+					o += map[i][j].e + " ";
 				}
 			}
+			field.value = o;
+		}
 
-			function changeTile(ci, cj){
-				if(mouseMode == 0){
-					if(toolValue >= 0){// Move to other error handled blahalbjasdohjb
-						map[ci][cj].h = toolValue;
-					}
-				}else if(mouseMode == 1){
-					map[ci][cj].top = toolValue;
-				}else if(mouseMode == 2){
-					map[ci][cj].side = toolValue;
-				}else if(mouseMode == 3){
-					if(!map[ci][cj].cl && !map[ci][cj].cr){
-						map[ci][cj].cl = 1;
-					}else if(map[ci][cj].cl && !map[ci][cj].cr){
-						map[ci][cj].cl = 0;
-						map[ci][cj].cr = 1;
-					}else if(!map[ci][cj].cl && map[ci][cj].cr){
-						map[ci][cj].cl = 1;
-					}else{
-						map[ci][cj].cl = 0;
-						map[ci][cj].cr = 0;
-					}
-				}else if(mouseMode == 4){
-					map[ci][cj].env = toolValue;
-				}else if(mouseMode == 5){
-					map[ci][cj].envc = toolValue;
-				}else if(mouseMode == 6){
-					if(eventName == "remove"){
-						map[ci][cj].e = 0;
-					}else{
-						map[ci][cj].e = eventName;
-					}
-				}
+		//-------------------------------------------- INPUT
+
+		document.addEventListener('keydown', function(event){
+			var code = event.keyCode;
+
+			if(code == 65 || code == 37){ //A
+				left = true;
+			}
+			if(code == 87 || code == 38){ //W
+				up = true;
+			}
+			if(code == 68 || code == 39){ //D
+				right = true;
+			}
+			if(code == 83 || code == 40){ //S
+				down = true;
+			}
+			if(code == 32){ //Space
+				space = true;
+			}
+			if(code == 16){ //Shift
+				shift = true;
+			}
+		});
+
+		document.addEventListener('keyup', function(event){
+			var code = event.keyCode;
+
+			if(code == 65 || code == 37){ //A
+				left = false;
+			}
+			if(code == 87 || code == 38){ //W
+				up = false;
+			}
+			if(code == 68 || code == 39){ //D
+				right = false;
+			}
+			if(code == 83 || code == 40){ //S
+				down = false;
+			}
+			if(code == 32){ //Space
+				space = false;
+			}
+			if(code == 16){ //Shift
+				shift = false;
+			}
+		});
+
+		//--------------------------------------------------------------------- GAME LOOP
+
+		function animate(){
+			requestAnimFrame(animate);
+
+			update();
+
+			renderer.render(stage);
+		}
+
+		function update(){
+			var speedAfter = speed; // Camera speed up. This feels like messy code but whatever.
+			if(shift){
+				speedAfter += 4;
+			}
+			if(left && !right){
+				cameraX -= speedAfter;
+			}
+			if(up && !down){
+				cameraY -= speedAfter;
+			}
+			if(right && !left){
+				cameraX += speedAfter;
+			}
+			if(down && !up){
+				cameraY += speedAfter;
 			}
 
-			function drawMap(){
-				for(var i = -bgSpan; i < bgSpan + sizeX; i++){
-					for(var j = -bgSpan; j < bgSpan + sizeY; j++){
-						var bgroud1 = (i < 0 || j < 0);
-						var ground2 = (i >= sizeX || j >= sizeY);
-						if(bgroud1){
-							var tile = new PIXI.Sprite(topTexture[tileSet][outside.top]);
+			area.position.x = -cameraX;
+			area.position.y = -cameraY;
+		}
 
-							tile.anchor.x = 0.5;
-							tile.anchor.y = 1;
+		function reload(){
+			while(bg1.children.length > 0){
+				bg1.removeChild(bg1.getChildAt(0));
+			}
+			for(var i = 0; i < levels.length; i++){
+				while(levels[i].children.length > 0){
+					levels[i].removeChild(levels[i].getChildAt(0));
+				}
+			}
+			for(var i = 0; i < levels.length; i++){
+				while(envLevels[i].children.length > 0){
+					envLevels[i].removeChild(envLevels[i].getChildAt(0));
+				}
+			}
+			while(bg2.children.length > 0){
+				bg2.removeChild(bg2.getChildAt(0));
+			}
+		}
 
-							tile.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
-							tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * outside.h) + (tileHeight/2);
+		function changeTile(ci, cj){
+			if(mouseMode == 0){
+				if(toolValue >= 0){// Move to other error handled blahalbjasdohjb
+					map[ci][cj].h = toolValue;
+				}
+			}else if(mouseMode == 1){
+				map[ci][cj].top = toolValue;
+			}else if(mouseMode == 2){
+				map[ci][cj].side = toolValue;
+			}else if(mouseMode == 3){
+				if(!map[ci][cj].cl && !map[ci][cj].cr){
+					map[ci][cj].cl = 1;
+				}else if(map[ci][cj].cl && !map[ci][cj].cr){
+					map[ci][cj].cl = 0;
+					map[ci][cj].cr = 1;
+				}else if(!map[ci][cj].cl && map[ci][cj].cr){
+					map[ci][cj].cl = 1;
+				}else{
+					map[ci][cj].cl = 0;
+					map[ci][cj].cr = 0;
+				}
+			}else if(mouseMode == 4){
+				map[ci][cj].env = toolValue;
+			}else if(mouseMode == 5){
+				map[ci][cj].envc = toolValue;
+			}else if(mouseMode == 6){
+				if(eventName == "remove"){
+					map[ci][cj].e = 0;
+				}else{
+					map[ci][cj].e = eventName;
+				}
+			}
+		}
 
-            				tile.hitArea = new PIXI.Polygon(new PIXI.Point(0, 0), new PIXI.Point(-tileWidth/2, -tileHeight/2), new PIXI.Point(0, -tileHeight), new PIXI.Point(tileWidth/2, -tileHeight/2));
+		function drawMap(){
+			for(var i = -bgSpan; i < bgSpan + sizeX; i++){
+				for(var j = -bgSpan; j < bgSpan + sizeY; j++){
+					var bgroud1 = (i < 0 || j < 0);
+					var ground2 = (i >= sizeX || j >= sizeY);
+					if(bgroud1){
+						var tile = new PIXI.Sprite(topTexture[tileSet][outside.top]);
 
-            				tile.interactive = true;
+						tile.anchor.x = 0.5;
+						tile.anchor.y = 1;
 
-            				tile.mousedown = function(data){
-	              				var ci = 0;
-	              				var cj = 0;
-	              				var close = 1000;
-	              				for(var i = 0; i < sizeX; i++){
-                					for(var j = 0; j < sizeY; j++){
-                  						var distance = Math.abs((sizeY - 1 + i - j) * (tileWidth/2) + start - this.position.x) + (Math.abs((i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2) - this.position.y) * 1.5);
-                  						if(distance < close){
-                    						ci = i;
-                    						cj = j;
-                    						close = distance;
-                  						}
-                					}
-              					}
-              					if(mouseMode == 0){
-                					if(toolValue >= 0){
-                  						outside.h = toolValue;
-                  						reload();
-                  						drawMap();
-                					}
-             					}else if(mouseMode == 1){
-                					outside.top = toolValue;
-                					reload();
-               	 					drawMap();
-              					}else if(mouseMode == 2){
+						tile.position.x = (sizeY - 1 + i - j) * (tileWidth/2) + start;
+						tile.position.y = (i + j) * (tileHeight/2) + start - (sideHeight * outside.h) + (tileHeight/2);
+
+        				tile.hitArea = new PIXI.Polygon(new PIXI.Point(0, 0), new PIXI.Point(-tileWidth/2, -tileHeight/2), new PIXI.Point(0, -tileHeight), new PIXI.Point(tileWidth/2, -tileHeight/2));
+
+        				tile.interactive = true;
+
+        				tile.mousedown = function(data){
+              				var ci = 0;
+              				var cj = 0;
+              				var close = 1000;
+              				for(var i = 0; i < sizeX; i++){
+            					for(var j = 0; j < sizeY; j++){
+              						var distance = Math.abs((sizeY - 1 + i - j) * (tileWidth/2) + start - this.position.x) + (Math.abs((i + j) * (tileHeight/2) + start - (sideHeight * map[i][j].h) + (tileHeight/2) - this.position.y) * 1.5);
+              						if(distance < close){
+                						ci = i;
+                						cj = j;
+                						close = distance;
+              						}
+            					}
+          					}
+          					if(mouseMode == 0){
+            					if(toolValue >= 0){
+              						outside.h = toolValue;
+              						reload();
+              						drawMap();
+            					}
+         					}else if(mouseMode == 1){
+            					outside.top = toolValue;
+            					reload();
+           	 					drawMap();
+          					}else if(mouseMode == 2){
                 				outside.side = toolValue;
                 				reload();
                 				drawMap();
@@ -1010,7 +1021,7 @@
 			}
 		}
 
-		// ------------------------------------ Values for map converter
+		// ------------------------------------ Values for map converter -------- CONSTANTS HERE
 
 		var values = new Array(50);
 		for(var i = 0; i < values.length; i++){
@@ -1250,11 +1261,16 @@
 
 	</script>
 	<p>
-	------------------------HELP------------------------<br>
+	__________________________________________________________HELP__________________________________________________________<br>
 	<br>
+	-----CONTROLS:<br>
+	WASD or arrows keys to move.<br>
+	Hold shift and click to use fill tool.<br>
+	<br>
+	_____________________________________________________________________________________________<br>
 	-----CREATING A MAP:<br>
 	At the top of the screen, enter the size of your map in x and y.<br>
-	They can be anything from 1 - 24<br>
+	They can be anything from 1 - 50<br>
 	Tileset must be 0 for now.<br>
 	<br>
 	-----SAVING YOUR MAP:<br>
@@ -1267,7 +1283,7 @@
 	It will either say "browse" or "choose file" depending on your browser.<br>
 	Select the text document that you saved before.<br>
 	<br>
-	------------------------<br>
+	_____________________________________________________________________________________________<br>
 	-----MAKING WARP POINTS (EVENT):<br>
 	Open a text editor and create a new text document.<br>
 	Call it something related to what it does like "warp_to_forest.txt". NO SPACES!<br>
@@ -1288,7 +1304,7 @@
 	Click "place event". Tip: Click "place event" again to switch to remove mode.<br>
 	Click on a tile to place the event.<br>
 	<br>
-	------------------------<br>
+	_____________________________________________________________________________________________<br>
 	-----COMPILING INTO A PLAYABLE VERSION.<br>
 	Put all of you maps into one folder on your computer.<br>
 	Do the same for all of your events.<br>
@@ -1308,7 +1324,7 @@
 	<br>
 	<br>
 	<br>
-	------------------------All Scripting Commands------------------------<br>
+	__________________________________________________________All Scripting Commands__________________________________________________________<br>
 	<br>
 	warp (name of map to warp to) (x coordinate) (y coordinate)<br>
 	(A way to warp from one map to another. Can also be used to warp to a new place in the same map. Although that might not be so later.)<br>
