@@ -19,14 +19,14 @@
 <body>
 	 <form onsubmit="newMap('mx', 'my', 'ts'); return false;">
 	 	<p>New: Size X / Size Y / Tileset (tileset must be 0)</p>
-		<input type="text" name="mx" id="mx" value="x">
-		<input type="text" name="my" id="my" value="y">
-		<input type="text" name="ts" id="ts" value="t">
+		<input type="text" name="mx" id="mx" size="4" value="x">
+		<input type="text" name="my" id="my" size="4" value="y">
+		<input type="text" name="ts" id="ts" size="4" value="t">
 		<input type="submit" name="submit" value="New">
 	</form>
 	<form onsubmit="go('outputText'); return false;">
 	 	<p>Save and Load: Save output / Save / Load</p>
-	 	<input type="text" name="out" id="outputText" value="">
+	 	<input type="text" name="out" id="outputText" value="" readonly="true">
 		<input type="submit" name="submit" value="Save">
     	<input type="file" name="file" id="file">
 	</form>
@@ -37,8 +37,8 @@
     	<input type="file" name="file2" id="file2">
   	</form>
 	<form onsubmit="compile2('output2'); return false;">
-	 	<p>Compile: Compile output / Compile / Load all maps / Load all events</p>
-		<input type="text" name="output2" id="output2" value="">
+	 	<p style="color:#ccccff">Compile: Compile output / Compile / Load all maps / Load all events</p>
+		<input type="text" name="output2" id="output2" value="" readonly="true">
 		<input type="submit" name="compile" value="Compile">
 		<input type="file" name="file3" id="file3" multiple="true">
 		<input type="file" name="file4" id="file4" multiple="true">
@@ -109,7 +109,7 @@
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "Map Maker 1.7 (Some things cleaned up. Max X and Y now 50.)";
+		versionNumber = "Map Maker 1.7a (Some things cleaned up. Max X and Y now 50.)";
 
 		var start = 100; //Depends on other things. Should be centered. Scrolling landscapes too. //FINAL
 		var layers = 100; //Temp variable. Don't know what this will eventually be. //FINAL
@@ -177,8 +177,8 @@
 
 	    //---------------------------------------- Map
 
-	    var sizeX = 0;
-	    var sizeY = 0;
+	    var sizeX = 15;
+	    var sizeY = 15;
 
 	    var outside = {
 	    	h: 0,
@@ -437,6 +437,10 @@
 		    tileSet = parseInt(f3.value);
 		    f3.value = "";
 
+		    generateNewMap();
+    	}
+
+    	function generateNewMap(){
 		    if(sizeX > 0 && sizeX < 51 && sizeY > 0 && sizeY < 51 && tileSet == 0){
 
 	      		for(var i = 0; i < sizeX; i++){
@@ -460,6 +464,8 @@
 	      		alert("X and Y must be 1 - 50 and tileSet must be 0");
 	      	}
     	}
+
+    	generateNewMap();
 
     	//----------------------------------------------------------- Map input
 
