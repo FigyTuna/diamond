@@ -72,7 +72,7 @@
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "0.1.3a (Alpha) Small changes to collision. A major rework is still imminent.";
+		versionNumber = "0.1.4 (Alpha) Collision correction totally redone.";
 
 		var area = new PIXI.DisplayObjectContainer(); //Main game container.
 		stage.addChild(area);
@@ -222,6 +222,12 @@
 
 		stage.addChild(version);
 
+		var testingText = new PIXI.Text("Collision helper.", {font: "12px Courier", fill: "white"});
+
+		testingText.position.x = testingText.position.y = 40;
+
+		stage.addChild(testingText);
+
 		//-------------------------------------------- INPUT
 
 		document.addEventListener('keydown', function(event){
@@ -309,15 +315,15 @@
 			//Still clunky and stick. The code is messy too. But it works even better than it did before.
 
 			//Version 2
-/*
-			function checkSpotForCol(imod, jmod){
+
+			function checkSpotForCol(imod, jmod, first, second){
 				if(lastZi + imod < 0 || lastZi + imod >= sizeX){//Out of bounds x
 					return true;
 				}
 				if(lastZj + jmod < 0 || lastZj + jmod >= sizeY){//Out of bounds y
 					return true;
 				}
-				if(map[lastZi][lastZj].h - map[lastZi + imod][lastZj + jmod] > 1 || map[lastZi][lastZj].h - map[lastZi + imod][lastZj + jmod] < -2){//Height difference
+				if(map[lastZi][lastZj].h - map[lastZi + imod][lastZj + jmod].h > 2 || map[lastZi][lastZj].h - map[lastZi + imod][lastZj + jmod].h < -1){//Height difference
 					return true;
 				}
 				//Collision markers
@@ -331,22 +337,64 @@
 							return true;
 						}
 					}
-				}
-				if(imod + jmod == -1){//up
-					if(jmod == -1){//right
+				}else if(imod + jmod == -1){//up
+					if(imod == -1){//left
 						if(lastZi != 0){
-							if(map[lastZi - 1][lastZj].cl){
+							if(map[lastZi - 1][lastZj].cr){
 								return true;
 							}
 						}
-					}else{//left
+					}else{//right
 						if(lastZj != 0){
-							if(map[lastZi][lastZj - 1].cr){
+							if(map[lastZi][lastZj - 1].cl){
 								return true;
 							}
 						}
 					}
+				}else{
+					if(imod == -1 && jmod == -1){//up
+						if(first && map[lastZi + imod][lastZj + jmod].cl){//right
+							return true;
+						}
+						if(second && map[lastZi + imod][lastZj + jmod].cr){//left
+							return true;
+						}
+						if(map[lastZi + imod][lastZj + jmod].cl && map[lastZi + imod][lastZj + jmod].cr){//The other one.
+							return true;
+						}
+					}else if(imod == 1 && jmod == -1){//right
+						if(first && map[lastZi + imod][lastZj + jmod].cl){//up
+							return true;
+						}
+						if(second && map[lastZi][lastZj + jmod].cr){//down
+							return true;
+						}
+						if(map[lastZi + imod][lastZj + jmod].cl && map[lastZi][lastZj + jmod].cr){
+							return true;
+						}
+					}else if(imod == 1 && jmod == 1){//down
+						if(first && map[lastZi][lastZj + jmod].cr){//right
+							return true;
+						}
+						if(second && map[lastZi + imod][lastZj].cl){//left
+							return true;
+						}
+						if(map[lastZi][lastZj + jmod].cr && map[lastZi + imod][lastZj].cl){
+							return true;
+						}
+					}else if(imod == -1 && jmod == 1){//left
+						if(first && map[lastZi + imod][lastZj + jmod].cr){//up
+							return true;
+						}
+						if(second && map[lastZi + imod][lastZj].cl){//down
+							return true;
+						}
+						if(map[lastZi + imod][lastZj + jmod].cr && map[lastZi + imod][lastZj].cl){
+							return true;
+						}
+					}
 				}
+				return false;
 			}
 
 			var modi = ci - lastZi;
@@ -359,14 +407,15 @@
 				var dfix = false;
 				var col = false;
 
-				var colUP = checkSpotForCol(-1, -1);
 				var colUPRIGHT = checkSpotForCol(0, -1);
-				var colRIGHT = checkSpotForCol(1, -1);
 				var colDOWNRIGHT = checkSpotForCol(1, 0);
-				var colDOWN = checkSpotForCol(1, 1);
 				var colDOWNLEFT = checkSpotForCol(0, 1);
-				var colLEFT = checkSpotForCol(-1, 1);
 				var colUPLEFT = checkSpotForCol(-1, 0);
+
+				var colUP = checkSpotForCol(-1, -1, colUPRIGHT, colUPLEFT);
+				var colRIGHT = checkSpotForCol(1, -1, colUPRIGHT, colDOWNRIGHT);
+				var colDOWN = checkSpotForCol(1, 1, colDOWNRIGHT, colDOWNLEFT);
+				var colLEFT = checkSpotForCol(-1, 1, colUPLEFT, colDOWNLEFT);
 
 				if(colUPRIGHT && colUPLEFT){
 					colUP = true;
@@ -377,7 +426,7 @@
 				if(colDOWNRIGHT && colDOWNLEFT){
 					colDOWN = true;
 				}
-				if(colUPLEFT && colUPLEFT){
+				if(colUPLEFT && colDOWNLEFT){
 					colLEFT = true;
 				}
 
@@ -414,9 +463,68 @@
 						dfix = true;
 					}
 					if(up && !left){
-						lfix = true;
+						rfix = true;
 					}
 				}
+
+				if(modi == 1 && modj == 1 && colDOWN){//down
+					col = true;
+					if(down && !right && !left){
+						if(colDOWNRIGHT && !colDOWNLEFT){
+							lfix = true;
+						}
+						if(colDOWNLEFT && !colDOWNRIGHT){
+							rfix = true;
+						}
+						if(!colDOWNLEFT && !colDOWNRIGHT){
+							rfix = true;
+						}
+					}
+				}
+				if(modi == 1 && modj == -1 && colRIGHT){//right
+					col = true;
+					if(right && !up && !down){
+						if(colUPRIGHT && !colDOWNRIGHT){
+							dfix = true;
+						}
+						if(colDOWNRIGHT && !colUPRIGHT){
+							ufix = true;
+						}
+						if(!colDOWNRIGHT && !colUPRIGHT){
+							ufix = true;
+						}
+					}
+				}
+				if(modi == -1 && modj == 1 && colLEFT){//left
+					col = true;
+					if(left && !up && !down){
+						if(colUPLEFT && !colDOWNLEFT){
+							dfix = true;
+						}
+						if(colDOWNLEFT && !colUPLEFT){
+							ufix = true;
+						}
+						if(!colDOWNLEFT && !colUPLEFT){
+							ufix = true;
+						}
+					}
+				}
+				if(modi == -1 && modj == -1 && colUP){//up
+					col = true;
+					if(up && !right && !left){
+						if(colUPRIGHT && !colUPLEFT){
+							lfix = true;
+						}
+						if(colUPLEFT && !colUPRIGHT){
+							rfix = true;
+						}
+						if(!colUPLEFT && !colUPRIGHT){
+							rfix = true;
+						}
+					}
+				}
+
+				testingText.setText("up:         " + colUP + "\nup right:   " + colUPRIGHT + "\nright:      " + colRIGHT + "\ndown right: " + colDOWNRIGHT + "\ndown:       " + colDOWN + "\ndown left:  " + colDOWNLEFT + "\nleft:       " + colLEFT + "\nup left:    " + colUPLEFT);
 
 				if(col){
 
@@ -424,30 +532,30 @@
 					guyy -= ud;
 
 					if(rfix){
-						guyx += speed * 0.55;
+						guyx += speed * 1.2;
 						guyy += ud;
 					}
 					if(lfix){
-						guyx -= speed * 0.55;
+						guyx -= speed * 1.2;
 						guyy += ud;
 					}
 					if(ufix){
 						guyx += lr;
-						guyy -= speed * 0.4;
+						guyy -= speed * 0.6;
 					}
 					if(dfix){
 						guyx += lr;
-						guyy += speed * 0.4;
+						guyy += speed * 0.6;
 					}
 
 					ci = lastZi;
 					cj = lastZj;
 
 				}
-			}*/
+			}
 
 			//Version 1
-
+/*
 			var col = false;
 			var ol = false;
 			var or = false;
@@ -607,7 +715,7 @@
 				}
 				ci = lastZi;
 				cj = lastZj;
-			}
+			}*/
 
 			//-------------------------- Event
 			if(map[ci][cj].e != 0){
