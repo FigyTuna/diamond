@@ -9,6 +9,9 @@ The game's code is mostly in index.html and mapmaker.html .
 Right now the only really terrible thing in the code is the collision correction.
 Otherwise look over the code and ask me questions if you have any.
 
+NOTICE:
+This game has not been worked on in a long time but it could be revived if there is interest in working on it.
+
 Links to everything:
 
 [FigyTuna.me](http://www.figytuna.me)

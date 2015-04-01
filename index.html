@@ -72,7 +72,7 @@
 
 		//----------------------------------- VARIABLES
 
-		versionNumber = "0.1.4a (Alpha) Collision correction totally redone. New tiles.";
+		versionNumber = "0.1.4b (Alpha) Collision correction totally redone. New tiles. Collision helper removed.";
 
 		var area = new PIXI.DisplayObjectContainer(); //Main game container.
 		stage.addChild(area);
@@ -222,11 +222,14 @@
 
 		stage.addChild(version);
 
+//Collision helper>
+/*
 		var testingText = new PIXI.Text("Collision helper.", {font: "12px Courier", fill: "white"});
 
 		testingText.position.x = testingText.position.y = 40;
 
 		stage.addChild(testingText);
+*/
 
 		//-------------------------------------------- INPUT
 
@@ -524,7 +527,8 @@
 					}
 				}
 
-				testingText.setText("up:         " + colUP + "\nup right:   " + colUPRIGHT + "\nright:      " + colRIGHT + "\ndown right: " + colDOWNRIGHT + "\ndown:       " + colDOWN + "\ndown left:  " + colDOWNLEFT + "\nleft:       " + colLEFT + "\nup left:    " + colUPLEFT);
+				//Collision helper >
+				//testingText.setText("up:         " + colUP + "\nup right:   " + colUPRIGHT + "\nright:      " + colRIGHT + "\ndown right: " + colDOWNRIGHT + "\ndown:       " + colDOWN + "\ndown left:  " + colDOWNLEFT + "\nleft:       " + colLEFT + "\nup left:    " + colUPLEFT);
 
 				if(col){
 
